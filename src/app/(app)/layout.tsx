@@ -1,0 +1,32 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useSession } from "@/components/auth-provider";
+import { BottomNav } from "@/components/bottom-nav";
+import { ErrorState, FullScreenLoader } from "@/components/ui";
+import { useMe } from "@/lib/hooks";
+
+/** Área logada: exige sessão e casal formado. */
+export default function AppLayout({ children }: LayoutProps<"/">) {
+  const router = useRouter();
+  const { session, loading } = useSession();
+  const me = useMe();
+  const noCouple = me.data && !me.data.couple;
+
+  useEffect(() => {
+    if (loading) return;
+    if (!session) router.replace("/login");
+    else if (noCouple) router.replace("/onboarding");
+  }, [loading, session, noCouple, router]);
+
+  if (loading || !session || me.isPending || noCouple) return <FullScreenLoader />;
+  if (me.isError) return <ErrorState error={me.error} onRetry={() => me.refetch()} />;
+
+  return (
+    <div className="mx-auto min-h-dvh max-w-[480px] pb-28">
+      {children}
+      <BottomNav />
+    </div>
+  );
+}

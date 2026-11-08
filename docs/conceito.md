@@ -44,3 +44,6 @@ wishlist     (id, couple_id, place_name, notes, added_by, done_date_id)
 1. Nota de **1 a 10**; as notas ficam **ocultas até os dois avaliarem**
 2. Frontend: **aplicação web** (Next.js como PWA)
 3. Primeiro passo: protótipo visual em `prototype/index.html`
+4. Login com e-mail e senha (magic link não funciona bem em PWA instalada no iPhone)
+5. O casal é formado com um código de convite de 6 letras (máximo 2 pessoas)
+6. A lista "Queremos ir" e as estatísticas no perfil entraram já no MVP
