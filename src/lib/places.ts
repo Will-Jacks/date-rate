@@ -3,6 +3,7 @@
  * https://photon.komoot.io — usamos com debounce e poucos resultados.
  */
 import type { Category } from "./categories";
+import { supabase } from "./supabase";
 import type { PlacePick } from "./types";
 
 type PhotonFeature = {
@@ -35,6 +36,41 @@ export function guessCategory(osmKey?: string, osmValue?: string): Category | un
   return undefined;
 }
 
+/** Tipo do date a partir do primaryType do Google Places. */
+export function guessCategoryFromGoogle(t?: string): Category | undefined {
+  if (!t) return undefined;
+  if (t === "cafe" || t === "bakery" || t === "ice_cream_shop" || t === "coffee_shop" || t.endsWith("dessert_shop")) return "cafe";
+  if (t === "bar" || t === "pub" || t === "night_club" || t === "wine_bar") return "bar";
+  if (t === "movie_theater") return "cinema";
+  if (["performing_arts_theater", "concert_hall", "stadium", "event_venue", "amphitheatre"].includes(t)) return "show";
+  if (t === "restaurant" || t.endsWith("_restaurant") || t === "meal_takeaway" || t === "steak_house" || t === "pizza_place") return "jantar";
+  if (["park", "tourist_attraction", "museum", "art_gallery", "shopping_mall", "zoo", "aquarium", "beach", "amusement_park"].includes(t)) return "passeio";
+  if (["lodging", "hotel", "resort_hotel", "inn"].includes(t)) return "viagem";
+  return undefined;
+}
+
+// sem chave do Google no servidor: lembra para não tentar de novo a cada letra
+let googleOff = false;
+
+async function searchGoogle(q: string, near: { lat: number; lng: number } | null | undefined, limit: number, signal?: AbortSignal) {
+  if (googleOff) return null;
+  const { data } = await supabase().auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return null;
+  const res = await fetch("/api/places", {
+    method: "POST",
+    signal,
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ q, lat: near?.lat, lng: near?.lng, limit }),
+  });
+  if (res.status === 501) {
+    googleOff = true;
+    return null;
+  }
+  if (!res.ok) return null;
+  return ((await res.json()) as { places: PlacePick[] }).places;
+}
+
 export function formatAddress(p: PhotonFeature["properties"]): string | null {
   const street = [p.street, p.housenumber].filter(Boolean).join(", ");
   const parts = [street, p.district, p.city, p.state].filter(Boolean);
@@ -61,6 +97,13 @@ export async function searchPlaces(
 ): Promise<PlacePick[]> {
   const q = query.trim();
   if (q.length < 3) return [];
+  // Google Places (mais completo); se não estiver configurado ou falhar, OpenStreetMap
+  try {
+    const g = await searchGoogle(q, opts.near, opts.limit ?? 6, opts.signal);
+    if (g) return g;
+  } catch (e) {
+    if ((e as Error).name === "AbortError") throw e;
+  }
   const params = new URLSearchParams({ q, limit: String(opts.limit ?? 6), lang: "default" });
   if (opts.near) {
     params.set("lat", String(opts.near.lat));

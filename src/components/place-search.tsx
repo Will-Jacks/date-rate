@@ -53,7 +53,7 @@ export function PlaceSearch({
       } finally {
         setLoading(false);
       }
-    }, 350);
+    }, 450);
     return () => {
       clearTimeout(t);
       ctrl.abort();

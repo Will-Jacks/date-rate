@@ -3,7 +3,7 @@ import { compareScores } from "@/lib/compare";
 import { formatCost, formatDate, formatScore } from "@/lib/format";
 import { achievements, monthSpending, normalizePlace, onThisDay, retro, visitsOf, weeklyStreak } from "@/lib/insights";
 import { buildMessage } from "@/lib/notify-messages";
-import { guessCategory } from "@/lib/places";
+import { guessCategory, guessCategoryFromGoogle } from "@/lib/places";
 import type { DateItem } from "@/lib/types";
 
 let seq = 0;
@@ -150,5 +150,9 @@ describe("busca de lugares", () => {
     expect(guessCategory("amenity", "cinema")).toBe("cinema");
     expect(guessCategory("leisure", "park")).toBe("passeio");
     expect(guessCategory("shop", "shoes")).toBeUndefined();
+    expect(guessCategoryFromGoogle("brazilian_restaurant")).toBe("jantar");
+    expect(guessCategoryFromGoogle("night_club")).toBe("bar");
+    expect(guessCategoryFromGoogle("movie_theater")).toBe("cinema");
+    expect(guessCategoryFromGoogle("car_wash")).toBeUndefined();
   });
 });
