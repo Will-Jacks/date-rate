@@ -10,12 +10,37 @@ import { formatScore } from "@/lib/format";
 import { useInvalidateDates } from "@/lib/hooks";
 import type { DateItem, Me } from "@/lib/types";
 import { useToast } from "./toast";
-import { Button, TextArea } from "./ui";
+import { Confetti } from "./confetti";
+import { Avatar, Button, TextArea } from "./ui";
 
-function Box({ who, children, className = "" }: { who: string; children: React.ReactNode; className?: string }) {
+/** Cor de cada nota: frio nas baixas, vinho nas altas. */
+export function scoreTone(n: number): string {
+  if (n <= 3) return "#6f7f8f";
+  if (n <= 5) return "#b08a62";
+  if (n <= 7) return "#d9735f";
+  if (n <= 9) return "#b5404c";
+  return "#8c2f39";
+}
+
+function Box({
+  who,
+  avatar,
+  tone = "wine",
+  children,
+  className = "",
+}: {
+  who: string;
+  avatar?: string;
+  tone?: "wine" | "coral";
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <div className={`flex min-h-36 flex-col rounded-2xl border border-line bg-card p-4 ${className}`}>
-      <div className="mb-1 truncate text-[13px] text-muted">{who}</div>
+      <div className="mb-2 flex items-center gap-2 text-[13px] text-muted">
+        <Avatar name={avatar ?? who} tone={tone} />
+        <span className="truncate">{who}</span>
+      </div>
       {children}
     </div>
   );
@@ -33,7 +58,7 @@ function Locked({ icon, text }: { icon: React.ReactNode; text: string }) {
 function Score({ score, comment }: { score: number; comment: string | null }) {
   return (
     <>
-      <div className="font-serif text-[40px] leading-none text-wine">
+      <div className="font-serif text-[40px] leading-none" style={{ color: scoreTone(score) }}>
         {score}
         <small className="font-sans text-base text-muted">/10</small>
       </div>
@@ -50,6 +75,7 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
   const [comment, setComment] = useState(date.my_comment ?? "");
   const [saving, setSaving] = useState(false);
   const [justRevealed, setJustRevealed] = useState(false);
+  const [popKey, setPopKey] = useState(0);
 
   // anima quando a nota do par aparece enquanto a tela está aberta
   // (você acabou de avaliar ou o par avaliou agora, via tempo real)
@@ -79,7 +105,7 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
   let partnerBox: React.ReactNode;
   if (!me.partner) {
     partnerBox = (
-      <Box who="Seu par">
+      <Box who="Seu par" tone="coral">
         <Locked
           icon={<Hourglass className="size-7" aria-hidden />}
           text="Ainda não entrou no app."
@@ -91,19 +117,19 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
     );
   } else if (!date.partner_rated) {
     partnerBox = (
-      <Box who={partnerName}>
+      <Box who={partnerName} tone="coral">
         <Locked icon={<Hourglass className="size-7" aria-hidden />} text="Ainda não avaliou" />
       </Box>
     );
   } else if (date.partner_score == null) {
     partnerBox = (
-      <Box who={partnerName}>
+      <Box who={partnerName} tone="coral">
         <Locked icon={<Lock className="size-7" aria-hidden />} text="Já avaliou! A nota aparece quando você avaliar." />
       </Box>
     );
   } else {
     partnerBox = (
-      <Box who={partnerName} className={revealed ? "animate-reveal" : ""}>
+      <Box who={partnerName} tone="coral" className={revealed ? "animate-reveal" : ""}>
         <Score score={date.partner_score} comment={date.partner_comment} />
       </Box>
     );
@@ -112,7 +138,7 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
   return (
     <section aria-label="Avaliações">
       <div className="grid grid-cols-2 gap-3">
-        <Box who="Você">
+        <Box who="Você" avatar={me.profile.display_name}>
           {date.my_score != null ? (
             <>
               <Score score={date.my_score} comment={date.my_comment} />
@@ -145,6 +171,10 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
           animate={revealed}
         />
       )}
+      {revealed &&
+        date.my_score != null &&
+        date.partner_score != null &&
+        (date.my_score === date.partner_score || (date.my_score >= 9 && date.partner_score >= 9)) && <Confetti />}
 
       {showForm && (
         <div className="mt-5 rounded-2xl border border-line bg-card p-4">
@@ -152,12 +182,21 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
           <div className="mb-3 grid grid-cols-5 gap-2" role="radiogroup" aria-label="Nota de 1 a 10">
             {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
               <button
-                key={n}
+                key={score === n ? `${n}-${popKey}` : n}
                 role="radio"
                 aria-checked={score === n}
-                onClick={() => setScore(n)}
+                onClick={() => {
+                  setScore(n);
+                  setPopKey((k) => k + 1);
+                  navigator.vibrate?.(12);
+                }}
+                style={
+                  score === n
+                    ? { background: scoreTone(n), borderColor: scoreTone(n) }
+                    : { color: scoreTone(n) }
+                }
                 className={`h-11 rounded-xl border text-base font-semibold transition-colors ${
-                  score === n ? "border-wine bg-wine text-white" : "border-line bg-cream text-ink"
+                  score === n ? "animate-pop text-white" : "border-line bg-cream"
                 }`}
               >
                 {n}

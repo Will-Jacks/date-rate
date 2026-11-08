@@ -72,7 +72,7 @@ export default function WishlistPage() {
       ) : wishlist.isError ? (
         <ErrorState error={wishlist.error} onRetry={() => wishlist.refetch()} />
       ) : !wishlist.data.length ? (
-        <EmptyState title="Lista vazia" text="Anotem aqui os lugares que querem conhecer juntos." />
+        <EmptyState art="list" title="Lista vazia" text="Anotem aqui os lugares que querem conhecer juntos." />
       ) : (
         <div className="flex flex-col gap-6 px-4">
           {!!todo.length && (

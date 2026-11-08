@@ -4,22 +4,30 @@ import { Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { categoryInfo } from "@/lib/categories";
+import { compareScores } from "@/lib/compare";
 import { formatDate, formatScore } from "@/lib/format";
 import type { DateItem } from "@/lib/types";
 import { Cover } from "./cover";
 
 export function ScoreBadge({ date, partnerName }: { date: DateItem; partnerName: string | null }) {
+  // cores fixas: o selo fica sobre a foto, igual nos temas claro e escuro
   const base = "rounded-full px-3 py-1.5 text-sm font-semibold shadow-sm backdrop-blur";
-  if (date.couple_avg != null)
+  if (date.couple_avg != null) {
+    const emoji =
+      date.my_score != null && date.partner_score != null
+        ? compareScores({ mine: date.my_score, partner: date.partner_score, partnerName: "", seed: date.id }).emoji
+        : null;
     return (
-      <span className={`${base} flex items-center gap-1 bg-white/92 text-wine`}>
+      <span className={`${base} flex items-center gap-1 bg-white/92 text-[#8c2f39]`}>
         <Heart className="size-3.5 fill-current" aria-hidden />
         {formatScore(date.couple_avg)}
+        {emoji && <span className="ml-0.5">{emoji}</span>}
       </span>
     );
-  if (date.my_score == null) return <span className={`${base} bg-wine text-white`}>Falta sua nota</span>;
+  }
+  if (date.my_score == null) return <span className={`${base} bg-[#8c2f39] text-white`}>Falta sua nota</span>;
   return (
-    <span className={`${base} bg-white/92 text-muted`}>
+    <span className={`${base} bg-white/92 text-[#6b5d56]`}>
       {partnerName ? `Esperando ${partnerName}` : "Esperando seu par"}
     </span>
   );
@@ -71,7 +79,7 @@ export function DateCard({
 
       <div className="absolute right-3.5 top-3.5 flex items-center gap-2">
         {date.favorite && (
-          <span className="grid size-8 place-items-center rounded-full bg-white/92 text-wine shadow-sm" aria-label="Favorito">
+          <span className="grid size-8 place-items-center rounded-full bg-white/92 text-[#8c2f39] shadow-sm" aria-label="Favorito">
             <Heart className="size-4 fill-current" aria-hidden />
           </span>
         )}

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { DateCard } from "@/components/date-card";
 import { useToast } from "@/components/toast";
-import { EmptyState, ErrorState, PageHeader, Spinner } from "@/components/ui";
+import { EmptyState, ErrorState, FeedSkeleton, PageHeader } from "@/components/ui";
 import { errorMessage } from "@/lib/errors";
 import { useCurrentMe, useDates, useSignedUrls, useToggleFavorite } from "@/lib/hooks";
 
@@ -69,13 +69,12 @@ export default function FeedPage() {
       )}
 
       {dates.isPending ? (
-        <div className="grid place-items-center py-24">
-          <Spinner />
-        </div>
+        <FeedSkeleton />
       ) : dates.isError ? (
         <ErrorState error={dates.error} onRetry={() => dates.refetch()} />
       ) : !dates.data.length ? (
         <EmptyState
+          art="dates"
           title="Nenhum date ainda"
           text="Toque no + para registrar o primeiro. A capa vira um card aqui no feed."
           action={
@@ -86,6 +85,7 @@ export default function FeedPage() {
         />
       ) : !list.length ? (
         <EmptyState
+          art={filter === "favoritos" ? "favorites" : "done"}
           title={filter === "favoritos" ? "Sem favoritos" : "Tudo avaliado!"}
           text={
             filter === "favoritos"

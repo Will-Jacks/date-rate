@@ -85,7 +85,7 @@ export default function EditDatePage() {
           </button>
         }
       />
-      <div className="px-4 pb-8">
+      <div className="px-4 pb-32">
         <DateForm
           initial={d}
           existingCoverUrl={d.cover_path ? urls.data?.[d.cover_path] : undefined}

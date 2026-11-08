@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useSession } from "@/components/auth-provider";
 import { BottomNav } from "@/components/bottom-nav";
@@ -11,6 +11,10 @@ import { useRealtime } from "@/lib/realtime";
 /** Área logada: exige sessão e casal formado. */
 export default function AppLayout({ children }: LayoutProps<"/">) {
   const router = useRouter();
+  const path = usePathname();
+  // formulários têm o próprio botão fixo no rodapé
+  const isForm = path === "/dates/new" || path.endsWith("/edit");
+  const isDetail = path.startsWith("/dates/") && !isForm;
   const { session, loading } = useSession();
   const me = useMe();
   const noCouple = me.data && !me.data.couple;
@@ -26,9 +30,11 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
   if (me.isError) return <ErrorState error={me.error} onRetry={() => me.refetch()} />;
 
   return (
-    <div className="mx-auto min-h-dvh max-w-[480px] pb-28">
-      {children}
-      <BottomNav />
+    <div className={`mx-auto min-h-dvh max-w-[480px] ${isForm ? "" : "pb-28"}`}>
+      <div key={path} className={isDetail ? "animate-page-up" : "animate-page-fade"}>
+        {children}
+      </div>
+      {!isForm && <BottomNav />}
     </div>
   );
 }

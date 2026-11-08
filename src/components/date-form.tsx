@@ -114,7 +114,7 @@ export function DateForm({
           {coverUrl ? (
             <>
               <img src={coverUrl} alt="Capa" className="size-full object-cover" />
-              <span className="absolute bottom-3 right-3 rounded-full bg-white/90 px-3 py-1.5 text-sm font-semibold text-wine">
+              <span className="absolute bottom-3 right-3 rounded-full bg-white/90 px-3 py-1.5 text-sm font-semibold text-[#8c2f39]">
                 Trocar capa
               </span>
             </>
@@ -226,9 +226,12 @@ export function DateForm({
         <span className="text-xs text-muted">Até {MAX_EXTRAS} fotos além da capa.</span>
       </div>
 
-      <Button type="submit" loading={saving} className="mt-2">
-        {saving && progress ? progress : submitLabel}
-      </Button>
+      {/* botão fixo no rodapé: sempre à mão, sem rolar até o fim */}
+      <div className="pb-safe fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[480px] border-t border-line bg-cream/90 px-4 pt-3 backdrop-blur-md">
+        <Button type="submit" loading={saving} className="w-full">
+          {saving && progress ? progress : submitLabel}
+        </Button>
+      </div>
     </form>
   );
 }

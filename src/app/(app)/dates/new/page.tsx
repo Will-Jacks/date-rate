@@ -58,7 +58,7 @@ function NewDate() {
           </button>
         }
       />
-      <div className="px-4 pb-8">
+      <div className="px-4 pb-32">
         <DateForm initial={{ place_name: place }} submitLabel="Salvar date" saving={saving} progress={progress} onSubmit={save} />
       </div>
     </>
