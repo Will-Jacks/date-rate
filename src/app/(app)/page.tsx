@@ -14,6 +14,7 @@ import { formatScore } from "@/lib/format";
 import { useCurrentMe, useDates, usePlans, useSignedUrls, useToggleFavorite } from "@/lib/hooks";
 import { normalizePlace, onThisDay } from "@/lib/insights";
 import type { DateItem } from "@/lib/types";
+import { coverPosition } from "@/components/cover";
 
 type Filter = "todos" | "pendentes" | "favoritos";
 type Sort = "recentes" | "antigos" | "melhores" | "piores";
@@ -148,7 +149,7 @@ function Feed() {
         >
           <div className="relative size-20 shrink-0 bg-skeleton">
             {m.cover_path && covers.data?.[m.cover_path] && (
-              <img src={covers.data[m.cover_path]} alt="" className="size-full object-cover" />
+              <img src={covers.data[m.cover_path]} alt="" className="size-full object-cover" style={{ objectPosition: coverPosition(m) }} />
             )}
           </div>
           <span className="min-w-0 flex-1 py-2 pr-3">

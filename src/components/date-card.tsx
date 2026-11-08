@@ -7,7 +7,7 @@ import { categoryInfo } from "@/lib/categories";
 import { compareScores } from "@/lib/compare";
 import { formatDate, formatScore } from "@/lib/format";
 import type { DateItem } from "@/lib/types";
-import { Cover } from "./cover";
+import { Cover, coverPosition } from "./cover";
 
 export function ScoreBadge({ date, partnerName }: { date: DateItem; partnerName: string | null }) {
   // cores fixas: o selo fica sobre a foto, igual nos temas claro e escuro
@@ -74,7 +74,7 @@ export function DateCard({
       onMouseEnter={() => router.prefetch(href)}
       className="relative aspect-[4/5] cursor-pointer select-none overflow-hidden rounded-2xl shadow-[0_8px_24px_rgba(43,29,26,.12)] transition-transform active:scale-[.98]"
     >
-      <Cover url={coverUrl} category={date.category} alt="" />
+      <Cover url={coverUrl} category={date.category} alt="" position={coverPosition(date)} />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 via-40% to-transparent to-65%" />
 
       <div className="absolute right-3.5 top-3.5 flex items-center gap-2">

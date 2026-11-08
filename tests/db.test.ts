@@ -119,6 +119,28 @@ describe("notas ocultas", () => {
 });
 
 describe("novidades", () => {
+  it("posição da capa: padrão no centro, o par pode ajustar e fica entre 0 e 100", async () => {
+    const before = await h.as(A, `select cover_x, cover_y from get_dates($1)`, [dateId]);
+    expect(before.rows[0]).toEqual({ cover_x: 50, cover_y: 50 });
+    expect((await h.as(B, `update dates set cover_x = 30, cover_y = 0 where id = $1`, [dateId])).error).toBeNull();
+    const after = await h.as(A, `select cover_x, cover_y from get_dates($1)`, [dateId]);
+    expect(after.rows[0]).toEqual({ cover_x: 30, cover_y: 0 });
+    expect((await h.as(A, `update dates set cover_x = 101 where id = $1`, [dateId])).error).toContain("dates_cover_focus_range");
+  });
+
+  it("critérios podem ser editados depois, sem mudar a nota", async () => {
+    const id = (
+      await h.as<{ id: string }>(A, `insert into dates (couple_id, place_name) values ($1, 'Crit') returning id`, [coupleId])
+    ).rows[0].id;
+    const up = `insert into ratings (date_id, user_id, score, comment, food, vibe) values ($1, auth.uid(), 8, 'bom', $2, $3)
+                on conflict (date_id, user_id) do update set score = excluded.score, comment = excluded.comment,
+                food = excluded.food, vibe = excluded.vibe`;
+    expect((await h.as(A, up, [id, null, null])).error).toBeNull();
+    expect((await h.as(A, up, [id, 9, 6])).error).toBeNull();
+    const r = await h.as(A, `select my_score, my_comment, my_criteria from get_dates($1)`, [id]);
+    expect(r.rows[0]).toEqual({ my_score: 8, my_comment: "bom", my_criteria: { food: 9, vibe: 6 } });
+  });
+
   it("get_dates traz frase, etiquetas e contagem de comentários", async () => {
     await h.as(B, `insert into date_comments (date_id, body) values ($1, 'como assim 10??')`, [dateId]);
     const r = await h.as(A, `select quote, tags, comments_count from get_dates($1)`, [dateId]);

@@ -8,12 +8,13 @@ dá uma nota de **1 a 10**. A nota do outro só aparece depois que você avalia.
 ## O que o app faz
 
 - **Feed** de cards 4:5 com busca, ordenação, filtros e etiquetas; toque duplo favorita
-- **Notas de 1 a 10 ocultas** até os dois avaliarem, com frases de comparação, confete e critérios opcionais (comida, ambiente, preço, vibe) num gráfico de radar
+- **Capa ajustável**: arraste para enquadrar e troque por qualquer foto do date sem abrir a galeria do celular
+- **Notas de 1 a 10 ocultas** até os dois avaliarem, com frases de comparação, confete e critérios opcionais (comida, ambiente, preço, vibe) num gráfico de radar, editáveis depois
 - **Conversa** em cada date, com reações em emoji (inclusive na nota do outro)
 - **Tempo real** e **notificações push**: nota nova, date novo, comentário, date marcado, lembretes
 - **Planos**: dates marcados com contagem regressiva, roleta para sortear o próximo e lista "Queremos ir"
 - **Busca de lugares** (OpenStreetMap) que preenche endereço, mapa e tipo do date
-- **Mapa** com os dates; **revisitas** do mesmo lugar com a evolução da nota
+- **Mapa** com os dates, aberto na sua localização atual; **revisitas** do mesmo lugar com a evolução da nota
 - **Nós**: estatísticas, medalhas, sequência de semanas, orçamento do mês e **Retrospectiva** anual no estilo stories
 - **"Num dia como hoje"**, **card para compartilhar nos stories**, **esqueci minha senha**, **modo offline**, tema escuro
 
@@ -22,7 +23,7 @@ dá uma nota de **1 a 10**. A nota do outro só aparece depois que você avalia.
 ### 1. Supabase
 1. Crie um projeto gratuito em [supabase.com](https://supabase.com).
 2. Em **SQL Editor**, rode **na ordem** cada arquivo de [`supabase/migrations/`](supabase/migrations/)
-   (`0001_init.sql` → `0005_features.sql`): cole o conteúdo e clique em **Run**.
+   (`0001_init.sql` → `0006_cover_focus.sql`): cole o conteúdo e clique em **Run**.
    Todos podem ser rodados de novo sem problema.
 3. Em **Authentication → Sign In / Providers → Email**, desative **Confirm email**.
 4. Em **Authentication → URL Configuration → Redirect URLs**, adicione

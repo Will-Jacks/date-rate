@@ -50,6 +50,7 @@ export default function EditDatePage() {
         newExtras: r.newExtras,
         removedPhotos: r.removedPhotos,
         coverFromPhoto: r.coverFromPhoto,
+        keepOldCover: r.keepOldCover,
         nextPosition: Math.max(-1, ...photos.data!.map((p) => p.position)) + 1,
         onProgress: (done, total) => setProgress(`Enviando fotos ${done}/${total}…`),
       });

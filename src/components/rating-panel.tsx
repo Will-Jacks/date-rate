@@ -12,7 +12,7 @@ import { useInvalidateDates, useReactions } from "@/lib/hooks";
 import type { Criteria, DateItem, Me } from "@/lib/types";
 import { useToast } from "./toast";
 import { Confetti } from "./confetti";
-import { CriteriaInput, hasCriteria } from "./criteria";
+import { CriteriaInput, CriteriaRadar, hasCriteria } from "./criteria";
 import { ReactionBar } from "./reactions";
 import { Avatar, Button, TextArea } from "./ui";
 
@@ -209,6 +209,8 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
         date.partner_score != null &&
         (date.my_score === date.partner_score || (date.my_score >= 9 && date.partner_score >= 9)) && <Confetti />}
 
+      {!showForm && <CriteriaSection date={date} me={me} partnerName={partnerName} />}
+
       {showForm && (
         <div className="mt-5 rounded-2xl border border-line bg-card p-4">
           <h3 className="mb-3 font-serif text-lg">{editing ? "Editar sua nota" : "Sua nota"}</h3>
@@ -274,6 +276,69 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
             </p>
           )}
         </div>
+      )}
+    </section>
+  );
+}
+
+/** Radar dos critérios + edição só dos critérios, sem mexer na nota. */
+function CriteriaSection({ date, me, partnerName }: { date: DateItem; me: Me; partnerName: string }) {
+  const toast = useToast();
+  const invalidate = useInvalidateDates();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<Criteria>({});
+  const [saving, setSaving] = useState(false);
+  const mine = hasCriteria(date.my_criteria);
+  const any = mine || hasCriteria(date.partner_criteria);
+
+  async function save() {
+    if (date.my_score == null) return;
+    setSaving(true);
+    try {
+      await saveRating(date.id, me.userId, date.my_score, date.my_comment, draft);
+      invalidate(date.id);
+      setEditing(false);
+      toast("Critérios salvos.");
+    } catch (e) {
+      toast(errorMessage(e), "error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="mt-6 rounded-2xl border border-line bg-card p-4" aria-label="Notas por critério">
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="font-serif text-lg">Por critério</h2>
+        {!editing && (
+          <button
+            onClick={() => {
+              setDraft(date.my_criteria ?? {});
+              setEditing(true);
+            }}
+            className="flex items-center gap-1 text-[13px] font-semibold text-wine"
+          >
+            <Pencil className="size-3.5" aria-hidden /> {mine ? "Editar" : "Avaliar"}
+          </button>
+        )}
+      </div>
+      {editing ? (
+        <div className="animate-slide-down">
+          <p className="mb-3 text-xs text-muted">Toque no número para dar a nota; toque de novo para limpar.</p>
+          <CriteriaInput value={draft} onChange={setDraft} />
+          <div className="mt-4 flex gap-2">
+            <Button variant="secondary" className="flex-1" onClick={() => setEditing(false)}>
+              Cancelar
+            </Button>
+            <Button className="flex-1" loading={saving} onClick={save}>
+              Salvar
+            </Button>
+          </div>
+        </div>
+      ) : any ? (
+        <CriteriaRadar mine={date.my_criteria} partner={date.partner_criteria} myName="Você" partnerName={partnerName} />
+      ) : (
+        <p className="text-sm text-muted">Deem notas para comida, ambiente, preço e vibe e comparem no gráfico.</p>
       )}
     </section>
   );

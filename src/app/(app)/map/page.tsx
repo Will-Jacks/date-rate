@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { EmptyState, PageHeader } from "@/components/ui";
 import { saveCoords } from "@/lib/api";
 import { keys, useDates } from "@/lib/hooks";
+import { cachedLocation } from "@/lib/geo";
 import { geocode } from "@/lib/places";
 
 // Leaflet só roda no navegador
@@ -32,7 +33,8 @@ export default function MapPage() {
     let cancelled = false;
     (async () => {
       const first = (dates.data ?? []).find((d) => d.lat != null && d.lng != null);
-      const near = first ? { lat: first.lat!, lng: first.lng! } : null;
+      // procura perto de onde vocês estão (ou dos outros dates), para não cair em outro país
+      const near = cachedLocation() ?? (first ? { lat: first.lat!, lng: first.lng! } : null);
       for (const d of missing.slice(0, 15)) {
         if (cancelled) return;
         tried.current.add(d.id);

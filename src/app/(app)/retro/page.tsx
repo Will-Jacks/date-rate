@@ -10,6 +10,7 @@ import { formatCost, formatScore } from "@/lib/format";
 import { useCurrentMe, useDates, useSignedUrls } from "@/lib/hooks";
 import { achievements, retro, retroYears } from "@/lib/insights";
 import type { DateItem } from "@/lib/types";
+import { coverPosition } from "@/components/cover";
 
 const BG = [
   "from-[#8c2f39] to-[#e0796b]",
@@ -20,7 +21,7 @@ const BG = [
   "from-[#21102a] to-[#f08fb1]",
 ];
 
-type Slide = { key: string; render: () => React.ReactNode; photo?: string | null };
+type Slide = { key: string; render: () => React.ReactNode; photo?: string | null; position?: string };
 
 function Big({ children }: { children: React.ReactNode }) {
   return <p className="font-serif text-[64px] font-bold leading-none">{children}</p>;
@@ -89,6 +90,7 @@ function Retro() {
     slides.push({
       key: "best",
       photo: photo(r.best),
+      position: coverPosition(r.best),
       render: () => (
         <>
           <p className="text-lg text-white/85">🏆 O melhor date do ano</p>
@@ -101,6 +103,7 @@ function Retro() {
     slides.push({
       key: "worst",
       photo: photo(r.worst),
+      position: coverPosition(r.worst),
       render: () => (
         <>
           <p className="text-lg text-white/85">😬 E o que não deu tão certo…</p>
@@ -113,6 +116,7 @@ function Retro() {
     slides.push({
       key: "closest",
       photo: photo(r.closest),
+      position: coverPosition(r.closest),
       render: () => (
         <>
           <p className="text-lg text-white/85">🎯 Onde vocês mais concordaram</p>
@@ -127,6 +131,7 @@ function Retro() {
     slides.push({
       key: "furthest",
       photo: photo(r.furthest),
+      position: coverPosition(r.furthest),
       render: () => (
         <>
           <p className="text-lg text-white/85">🔥 O que mais dividiu opiniões</p>
@@ -207,7 +212,7 @@ function Retro() {
     <div className={`fixed inset-0 z-50 bg-gradient-to-br ${BG[cur % BG.length]} text-white`}>
       {slide.photo && (
         <>
-          <img src={slide.photo} alt="" className="absolute inset-0 size-full object-cover" />
+          <img src={slide.photo} alt="" className="absolute inset-0 size-full object-cover" style={{ objectPosition: slide.position }} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/30" />
         </>
       )}

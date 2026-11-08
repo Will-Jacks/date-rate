@@ -83,7 +83,10 @@ export async function renderShareCard(opts: {
       const scale = Math.max(W / img.width, H / img.height);
       const w = img.width * scale;
       const h = img.height * scale;
-      ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+      // mesmo enquadramento do app: o ponto de foco da capa (0–100) decide o corte
+      const fx = (date.cover_x ?? 50) / 100;
+      const fy = (date.cover_y ?? 50) / 100;
+      ctx.drawImage(img, (W - w) * fx, (H - h) * fy, w, h);
     } catch {
       /* sem foto: fica o gradiente */
     }

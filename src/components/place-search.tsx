@@ -2,6 +2,7 @@
 
 import { LoaderCircle, MapPin, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { cachedLocation, locate } from "@/lib/geo";
 import { searchPlaces } from "@/lib/places";
 import type { PlacePick } from "@/lib/types";
 
@@ -14,6 +15,7 @@ export function PlaceSearch({
   onChange,
   onPick,
   near,
+  fallbackNear,
   placeholder = "Ex.: Mangai",
   invalid,
   autoFocus,
@@ -21,7 +23,10 @@ export function PlaceSearch({
   value: string;
   onChange: (v: string) => void;
   onPick: (p: PlacePick) => void;
+  /** onde procurar primeiro (ex.: lugar já escolhido) */
   near?: { lat: number; lng: number } | null;
+  /** usado se não houver `near` nem a localização atual */
+  fallbackNear?: { lat: number; lng: number } | null;
   placeholder?: string;
   invalid?: boolean;
   autoFocus?: boolean;
@@ -38,7 +43,9 @@ export function PlaceSearch({
     const t = setTimeout(async () => {
       setLoading(true);
       try {
-        const r = await searchPlaces(value, { near, signal: ctrl.signal });
+        // perto do lugar escolhido, senão de onde a pessoa está, senão dos dates anteriores
+        const bias = near ?? cachedLocation() ?? fallbackNear ?? null;
+        const r = await searchPlaces(value, { near: bias, signal: ctrl.signal });
         setResults(r);
         setOpen(true);
       } catch {
@@ -51,7 +58,7 @@ export function PlaceSearch({
       clearTimeout(t);
       ctrl.abort();
     };
-  }, [value, near]);
+  }, [value, near, fallbackNear]);
 
   useEffect(() => {
     const close = (e: MouseEvent) => {
@@ -71,7 +78,11 @@ export function PlaceSearch({
             typed.current = true;
             onChange(e.target.value);
           }}
-          onFocus={() => results.length && setOpen(true)}
+          onFocus={() => {
+            if (results.length) setOpen(true);
+            // primeira busca: pega a localização atual para sugerir lugares por perto
+            if (!near && !cachedLocation()) void locate();
+          }}
           placeholder={placeholder}
           maxLength={120}
           autoFocus={autoFocus}

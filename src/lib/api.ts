@@ -35,7 +35,29 @@ function normalizeDate(row: DateItem): DateItem {
     my_criteria: row.my_criteria ?? null,
     partner_criteria: row.partner_criteria ?? null,
     comments_count: row.comments_count ?? 0,
+    cover_x: row.cover_x ?? 50,
+    cover_y: row.cover_y ?? 50,
   };
+}
+
+/**
+ * Grava em `dates`. Se a migração 0006 (posição da capa) ainda não rodou no
+ * banco, tenta de novo sem cover_x/cover_y em vez de falhar o salvamento.
+ */
+async function writeDate<T extends { cover_x?: number; cover_y?: number }>(
+  row: T,
+  fn: (r: Omit<T, "cover_x" | "cover_y">) => PromiseLike<Res>,
+) {
+  try {
+    await run(() => fn(row));
+  } catch (e) {
+    const cause = e instanceof AppError ? (e.cause as { message?: string } | undefined) : undefined;
+    if (!/cover_[xy]/.test(String(cause?.message ?? ""))) throw e;
+    const rest: Partial<T> = { ...row };
+    delete rest.cover_x;
+    delete rest.cover_y;
+    await run(() => fn(rest as Omit<T, "cover_x" | "cover_y">));
+  }
 }
 
 /* ---------------------------------------------------------------- auth */
@@ -221,10 +243,8 @@ export async function createDate(args: {
   const [coverPath, ...extraPaths] = await uploadAll(coupleId, id, [cover, ...extras], onProgress);
 
   try {
-    await run(() =>
-      supabase()
-        .from("dates")
-        .insert({ id, couple_id: coupleId, ...input, cover_path: coverPath }),
+    await writeDate({ id, couple_id: coupleId, ...input, cover_path: coverPath }, (row) =>
+      supabase().from("dates").insert(row),
     );
   } catch (e) {
     await removePhotos([coverPath, ...extraPaths]);
@@ -257,21 +277,34 @@ export async function updateDate(args: {
   removedPhotos: DatePhoto[];
   /** foto extra que vira capa (a capa antiga vai para o lugar dela) */
   coverFromPhoto?: DatePhoto | null;
+  /** com capa nova: a capa antiga vira foto extra em vez de ser apagada */
+  keepOldCover?: boolean;
   nextPosition: number;
   onProgress?: SaveProgress;
 }) {
-  const { coupleId, id, input, oldCoverPath, newCover, newExtras, removedPhotos, coverFromPhoto, nextPosition, onProgress } =
-    args;
+  const {
+    coupleId,
+    id,
+    input,
+    oldCoverPath,
+    newCover,
+    newExtras,
+    removedPhotos,
+    coverFromPhoto,
+    keepOldCover,
+    nextPosition,
+    onProgress,
+  } = args;
   const files = newCover ? [newCover, ...newExtras] : newExtras;
   const uploaded = await uploadAll(coupleId, id, files, onProgress);
   const swap = !newCover && coverFromPhoto && oldCoverPath ? coverFromPhoto : null;
   const coverPath = newCover ? uploaded[0] : swap ? swap.path : oldCoverPath;
   const extraPaths = newCover ? uploaded.slice(1) : uploaded;
+  const keepOld = !!(newCover && oldCoverPath && keepOldCover);
+  if (keepOld) extraPaths.unshift(oldCoverPath!);
 
   try {
-    await run(() =>
-      supabase().from("dates").update({ ...input, cover_path: coverPath }).eq("id", id),
-    );
+    await writeDate({ ...input, cover_path: coverPath }, (row) => supabase().from("dates").update(row).eq("id", id));
   } catch (e) {
     await removePhotos(uploaded);
     throw e;
@@ -297,8 +330,16 @@ export async function updateDate(args: {
     );
   }
   const orphans = removedPhotos.map((p) => p.path);
-  if (newCover && oldCoverPath) orphans.push(oldCoverPath);
+  if (newCover && oldCoverPath && !keepOld) orphans.push(oldCoverPath);
   await removePhotos(orphans);
+}
+
+/** Troca a capa por uma das fotos extras (a capa antiga fica no lugar dela). */
+export async function setCoverFromPhoto(dateId: string, oldCoverPath: string, photo: DatePhoto) {
+  await writeDate({ cover_path: photo.path, cover_x: 50, cover_y: 50 }, (row) =>
+    supabase().from("dates").update(row).eq("id", dateId),
+  );
+  await run(() => supabase().from("date_photos").update({ path: oldCoverPath }).eq("id", photo.id));
 }
 
 export async function deleteDate(date: DateItem) {

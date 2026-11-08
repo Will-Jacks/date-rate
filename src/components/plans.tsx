@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { CalendarCheck, Dices, Trash2, X } from "lucide-react";
+import { CalendarCheck, Dices, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { addPlan, deletePlan } from "@/lib/api";
@@ -12,7 +12,7 @@ import type { Plan, WishItem } from "@/lib/types";
 import { Confetti } from "./confetti";
 import { PlaceSearch } from "./place-search";
 import { useToast } from "./toast";
-import { Button, Field, Input, TextArea } from "./ui";
+import { Button, Field, Input, Sheet, TextArea } from "./ui";
 
 /* --------------------------------------------------------- contagem */
 
@@ -40,36 +40,6 @@ function defaultWhen() {
 }
 
 /* ------------------------------------------------------------ modal */
-
-function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", esc);
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener("keydown", esc);
-    };
-  }, [onClose]);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" onClick={onClose} role="dialog" aria-modal="true" aria-label={title}>
-      <div
-        className="animate-page-up pb-safe max-h-[92dvh] w-full max-w-[480px] overflow-y-auto rounded-t-3xl bg-cream px-5 pt-5 sm:rounded-3xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-serif text-2xl">{title}</h2>
-          <button onClick={onClose} aria-label="Fechar" className="grid size-10 place-items-center rounded-full bg-line/60">
-            <X className="size-5" aria-hidden />
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-}
 
 /* ------------------------------------------------------- marcar date */
 

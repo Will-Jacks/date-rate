@@ -6,6 +6,7 @@ import { z } from "zod";
 import { CATEGORIES, type Category } from "@/lib/categories";
 import { todayISO } from "@/lib/format";
 import type { DateInput, DatePhoto } from "@/lib/types";
+import { CENTER, CoverChooser, CoverEditor, type CoverOption, type Focus } from "./cover-editor";
 import { PlaceSearch } from "./place-search";
 import { TagInput } from "./tag-input";
 import { Button, Field, Input, TextArea } from "./ui";
@@ -36,6 +37,8 @@ export type DateFormResult = {
   newExtras: File[];
   removedPhotos: DatePhoto[];
   coverFromPhoto: DatePhoto | null;
+  /** capa nova veio das fotos extras: a capa antiga vira foto extra */
+  keepOldCover: boolean;
 };
 
 /** URL local para pré-visualizar um arquivo, liberada ao desmontar. */
@@ -79,6 +82,10 @@ export function DateForm({
   const [extras, setExtras] = useState<File[]>([]);
   const [removed, setRemoved] = useState<DatePhoto[]>([]);
   const [coverFromPhoto, setCoverFromPhoto] = useState<DatePhoto | null>(null);
+  // a capa nova (arquivo) saiu das fotos extras? então a capa antiga vira extra ao salvar
+  const [coverWasExtra, setCoverWasExtra] = useState(false);
+  const [focus, setFocus] = useState<Focus>({ x: initial?.cover_x ?? 50, y: initial?.cover_y ?? 50 });
+  const [choosing, setChoosing] = useState(false);
   const [quote, setQuote] = useState(initial?.quote ?? "");
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
@@ -92,9 +99,82 @@ export function DateForm({
   const extraPreviews = useObjectUrls(extras);
 
   const keptPhotos = existingPhotos.filter((p) => !removed.some((r) => r.id === p.id));
-  const slotsLeft = MAX_EXTRAS - keptPhotos.length - extras.length;
+  const oldCoverBecomesExtra = cover.length > 0 && coverWasExtra && hasExistingCover;
+  const slotsLeft = MAX_EXTRAS - keptPhotos.length - extras.length - (oldCoverBecomesExtra ? 1 : 0);
   const coverUrl = coverPreview ?? (coverFromPhoto ? photoUrls[coverFromPhoto.path] : existingCoverUrl);
   const hasCover = cover.length > 0 || hasExistingCover;
+
+  /** Ao escolher outra foto do date como capa, a capa nova atual vira foto extra (não se perde). */
+  function releaseCover(): File[] {
+    return cover[0] ? [cover[0]] : [];
+  }
+
+  function clearCoverError() {
+    setErrors((errs) => Object.fromEntries(Object.entries(errs).filter(([k]) => k !== "cover")));
+  }
+
+  function pickFromDevice(f: File) {
+    setCover([f]);
+    setCoverFromPhoto(null);
+    setCoverWasExtra(false);
+    setFocus(CENTER);
+    clearCoverError();
+  }
+
+  function pickOriginal() {
+    setExtras((x) => [...x, ...releaseCover()]);
+    setCover([]);
+    setCoverFromPhoto(null);
+    setCoverWasExtra(false);
+    setFocus({ x: initial?.cover_x ?? 50, y: initial?.cover_y ?? 50 });
+  }
+
+  function pickExisting(p: DatePhoto) {
+    setExtras((x) => [...x, ...releaseCover()]);
+    setCover([]);
+    setCoverFromPhoto(p);
+    setCoverWasExtra(false);
+    setFocus(CENTER);
+  }
+
+  function pickExtra(i: number) {
+    const f = extras[i];
+    if (!f) return;
+    setExtras((x) => [...x.filter((_, j) => j !== i), ...releaseCover()]);
+    setCover([f]);
+    setCoverFromPhoto(null);
+    setCoverWasExtra(true);
+    setFocus(CENTER);
+    clearCoverError();
+  }
+
+  const coverOptions: CoverOption[] = [
+    ...(cover[0] ? [{ key: "new-cover", url: coverPreview, current: true }] : []),
+    ...(hasExistingCover && existingCoverUrl
+      ? [{ key: "original", url: existingCoverUrl, current: !cover.length && !coverFromPhoto }]
+      : []),
+    ...keptPhotos.map((p) => ({
+      key: `photo:${p.id}`,
+      url: photoUrls[p.path],
+      current: !cover.length && coverFromPhoto?.id === p.id,
+    })),
+    ...extraPreviews.map((url, i) => ({ key: `extra:${i}`, url })),
+  ];
+
+  function pick(key: string) {
+    setChoosing(false);
+    if (key === "original") return pickOriginal();
+    if (key.startsWith("photo:")) {
+      const p = keptPhotos.find((x) => `photo:${x.id}` === key);
+      if (p) pickExisting(p);
+    } else if (key.startsWith("extra:")) pickExtra(Number(key.slice(6)));
+  }
+
+  function changeCover() {
+    // sem outras fotos para escolher: vai direto para a galeria do celular
+    if (coverOptions.some((o) => !o.current)) setChoosing(true);
+    else coverInput.current?.click();
+  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -107,11 +187,19 @@ export function DateForm({
     setErrors(errs);
     if (!parsed.success || Object.keys(errs).length) return;
     onSubmit({
-      input: { ...parsed.data, tags, lat: coords?.lat ?? null, lng: coords?.lng ?? null },
+      input: {
+        ...parsed.data,
+        tags,
+        lat: coords?.lat ?? null,
+        lng: coords?.lng ?? null,
+        cover_x: focus.x,
+        cover_y: focus.y,
+      },
       newCover: cover[0] ?? null,
       newExtras: extras,
       removedPhotos: removed,
       coverFromPhoto: cover.length ? null : coverFromPhoto,
+      keepOldCover: oldCoverBecomesExtra,
     });
   }
 
@@ -119,28 +207,7 @@ export function DateForm({
     <form onSubmit={submit} className="flex flex-col gap-5" noValidate>
       {/* Capa */}
       <div>
-        <button
-          type="button"
-          onClick={() => coverInput.current?.click()}
-          className={`relative block aspect-[4/5] w-full overflow-hidden rounded-2xl border-2 border-dashed ${
-            errors.cover ? "border-wine" : "border-line"
-          } bg-card`}
-        >
-          {coverUrl ? (
-            <>
-              <img src={coverUrl} alt="Capa" className="size-full object-cover" />
-              <span className="absolute bottom-3 right-3 rounded-full bg-white/90 px-3 py-1.5 text-sm font-semibold text-[#8c2f39]">
-                Trocar capa
-              </span>
-            </>
-          ) : (
-            <span className="flex size-full flex-col items-center justify-center gap-2 text-muted">
-              <ImagePlus className="size-10" aria-hidden />
-              <span className="font-medium">Foto de capa</span>
-              <span className="text-xs">Toque para escolher da galeria ou tirar uma foto</span>
-            </span>
-          )}
-        </button>
+        <CoverEditor url={coverUrl} focus={focus} onFocus={setFocus} onChange={changeCover} invalid={!!errors.cover} />
         <input
           ref={coverInput}
           type="file"
@@ -148,21 +215,30 @@ export function DateForm({
           hidden
           onChange={(e) => {
             const f = e.target.files?.[0];
-            if (f) {
-              setCover([f]);
-              setCoverFromPhoto(null);
-            }
+            if (f) pickFromDevice(f);
             e.target.value = "";
           }}
         />
         {errors.cover && <p className="mt-1.5 text-sm text-wine">{errors.cover}</p>}
+        {choosing && (
+          <CoverChooser
+            options={coverOptions}
+            onPick={pick}
+            onDevice={() => {
+              setChoosing(false);
+              coverInput.current?.click();
+            }}
+            onClose={() => setChoosing(false)}
+          />
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Onde foi?</span>
         <PlaceSearch
           value={placeName}
-          near={coords ?? near}
+          near={coords}
+          fallbackNear={near}
           invalid={!!errors.place_name}
           onChange={(v) => {
             setPlaceName(v);
@@ -239,20 +315,25 @@ export function DateForm({
             <Thumb
               key={p.id}
               src={photoUrls[p.path]}
-              isCover={coverFromPhoto?.id === p.id}
+              isCover={!cover.length && coverFromPhoto?.id === p.id}
               onMakeCover={
-                hasExistingCover && !cover.length
-                  ? () => setCoverFromPhoto((c) => (c?.id === p.id ? null : p))
+                hasExistingCover
+                  ? () => (!cover.length && coverFromPhoto?.id === p.id ? pickOriginal() : pickExisting(p))
                   : undefined
               }
               onRemove={() => {
                 setRemoved((r) => [...r, p]);
-                if (coverFromPhoto?.id === p.id) setCoverFromPhoto(null);
+                if (coverFromPhoto?.id === p.id) pickOriginal();
               }}
             />
           ))}
           {extraPreviews.map((src, i) => (
-            <Thumb key={src} src={src} onRemove={() => setExtras((x) => x.filter((_, j) => j !== i))} />
+            <Thumb
+              key={src}
+              src={src}
+              onMakeCover={() => pickExtra(i)}
+              onRemove={() => setExtras((x) => x.filter((_, j) => j !== i))}
+            />
           ))}
           {slotsLeft > 0 && (
             <button
@@ -278,7 +359,8 @@ export function DateForm({
           }}
         />
         <span className="text-xs text-muted">
-          Até {MAX_EXTRAS} fotos além da capa.{keptPhotos.length > 0 && hasExistingCover ? " Toque na ★ para usar uma delas como capa." : ""}
+          Até {MAX_EXTRAS} fotos além da capa.
+          {keptPhotos.length + extras.length > 0 ? " Toque na ★ para usar uma delas como capa." : ""}
         </span>
       </div>
 

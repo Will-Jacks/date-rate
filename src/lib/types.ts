@@ -34,6 +34,9 @@ export type DateItem = {
   category: Category;
   cost: number | null;
   cover_path: string | null;
+  /** ponto de foco da capa, 0–100 (ausente antes da migração 0006) */
+  cover_x?: number;
+  cover_y?: number;
   favorite: boolean;
   created_at: string;
   quote: string | null;
@@ -119,4 +122,6 @@ export type DateInput = {
   tags: string[];
   lat: number | null;
   lng: number | null;
+  cover_x: number;
+  cover_y: number;
 };

@@ -5,8 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Conversation } from "@/components/conversation";
-import { Cover } from "@/components/cover";
-import { CriteriaRadar, hasCriteria } from "@/components/criteria";
+import { Cover, coverPosition } from "@/components/cover";
 import { Revisits, ShareButton } from "@/components/date-extras";
 import { Gallery } from "@/components/gallery";
 import { RatingPanel } from "@/components/rating-panel";
@@ -15,7 +14,8 @@ import { DetailSkeleton, ErrorState } from "@/components/ui";
 import { categoryInfo } from "@/lib/categories";
 import { errorMessage } from "@/lib/errors";
 import { formatCost, formatDate } from "@/lib/format";
-import { useCurrentMe, useDate, useDates, usePhotos, useSignedUrls, useToggleFavorite } from "@/lib/hooks";
+import { setCoverFromPhoto } from "@/lib/api";
+import { useCurrentMe, useDate, useDates, useInvalidateDates, usePhotos, useSignedUrls, useToggleFavorite } from "@/lib/hooks";
 
 // botões de vidro escuro: legíveis sobre qualquer foto, no tema claro ou escuro
 const roundBtn =
@@ -31,6 +31,7 @@ export default function DatePage() {
   const urls = useSignedUrls([date.data?.cover_path, ...(photos.data?.map((p) => p.path) ?? [])]);
   const favorite = useToggleFavorite();
   const toast = useToast();
+  const invalidate = useInvalidateDates();
   const [viewer, setViewer] = useState<number | null>(null);
 
   if (date.isPending) return <DetailSkeleton />;
@@ -47,6 +48,20 @@ export default function DatePage() {
     if (i >= 0) setViewer(i);
   };
 
+  /** Foto extra vira capa direto da galeria (a capa antiga fica no lugar dela). */
+  async function makeCover(index: number) {
+    const photo = photos.data?.find((p) => p.path === galleryPaths[index]);
+    if (!photo || !d.cover_path) return;
+    try {
+      await setCoverFromPhoto(d.id, d.cover_path, photo);
+      invalidate(d.id);
+      setViewer(null);
+      toast("Capa trocada! Para ajustar o enquadramento, toque em ✏️.");
+    } catch (e) {
+      toast(errorMessage(e), "error");
+    }
+  }
+
   const back = () => (window.history.length > 1 ? router.back() : router.push("/"));
   const sub = [formatDate(d.date_on), categoryInfo(d.category).label, d.cost != null ? formatCost(d.cost) : null]
     .filter(Boolean)
@@ -56,7 +71,12 @@ export default function DatePage() {
     <article>
       <div className="relative h-[55dvh] min-h-72 overflow-hidden">
         <button className="absolute inset-0" onClick={() => openAt(d.cover_path)} aria-label="Ver fotos em tela cheia">
-          <Cover url={d.cover_path ? urls.data?.[d.cover_path] : undefined} category={d.category} alt={d.place_name} />
+          <Cover
+            url={d.cover_path ? urls.data?.[d.cover_path] : undefined}
+            category={d.category}
+            alt={d.place_name}
+            position={coverPosition(d)}
+          />
         </button>
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 via-45% to-black/25" />
 
@@ -123,18 +143,6 @@ export default function DatePage() {
 
         <RatingPanel key={d.id} date={d} me={me} />
 
-        {(hasCriteria(d.my_criteria) || hasCriteria(d.partner_criteria)) && (
-          <section className="mt-6 rounded-2xl border border-line bg-card p-4">
-            <h2 className="mb-2 font-serif text-lg">Por critério</h2>
-            <CriteriaRadar
-              mine={d.my_criteria}
-              partner={d.partner_criteria}
-              myName="Você"
-              partnerName={me.partner?.display_name ?? "Seu par"}
-            />
-          </section>
-        )}
-
         {!!photos.data?.length && (
           <section className="mt-8">
             <h2 className="mb-3 font-serif text-xl">Fotos</h2>
@@ -164,7 +172,14 @@ export default function DatePage() {
         </div>
       </div>
 
-      {viewer != null && <Gallery urls={galleryUrls} start={viewer} onClose={() => setViewer(null)} />}
+      {viewer != null && (
+        <Gallery
+          urls={galleryUrls}
+          start={viewer}
+          onClose={() => setViewer(null)}
+          onMakeCover={galleryPaths[0] === d.cover_path ? makeCover : undefined}
+        />
+      )}
     </article>
   );
 }

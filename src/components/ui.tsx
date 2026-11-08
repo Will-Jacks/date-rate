@@ -1,6 +1,7 @@
 "use client";
 
-import { LoaderCircle, RefreshCw } from "lucide-react";
+import { LoaderCircle, RefreshCw, X } from "lucide-react";
+import { useEffect } from "react";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 import { errorMessage } from "@/lib/errors";
 
@@ -202,5 +203,36 @@ export function PageHeader({ title, left, right }: { title: ReactNode; left?: Re
       <h1 className="flex-1 truncate font-serif text-[28px] leading-tight text-wine">{title}</h1>
       {right}
     </header>
+  );
+}
+
+/** Painel que sobe de baixo (no celular) ou modal centralizado (no computador). */
+export function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", esc);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", esc);
+    };
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" onClick={onClose} role="dialog" aria-modal="true" aria-label={title}>
+      <div
+        className="animate-page-up pb-safe max-h-[92dvh] w-full max-w-[480px] overflow-y-auto rounded-t-3xl bg-cream px-5 pt-5 sm:rounded-3xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-serif text-2xl">{title}</h2>
+          <button onClick={onClose} aria-label="Fechar" className="grid size-10 place-items-center rounded-full bg-line/60">
+            <X className="size-5" aria-hidden />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
   );
 }
