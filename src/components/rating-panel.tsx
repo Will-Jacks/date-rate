@@ -4,6 +4,7 @@ import { Hourglass, Lock, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { saveRating } from "@/lib/api";
+import { compareScores } from "@/lib/compare";
 import { errorMessage } from "@/lib/errors";
 import { formatScore } from "@/lib/format";
 import { useInvalidateDates } from "@/lib/hooks";
@@ -49,6 +50,11 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
   const [comment, setComment] = useState(date.my_comment ?? "");
   const [saving, setSaving] = useState(false);
   const [justRevealed, setJustRevealed] = useState(false);
+
+  // anima quando a nota do par aparece enquanto a tela está aberta
+  // (você acabou de avaliar ou o par avaliou agora, via tempo real)
+  const [hadPartnerScore] = useState(date.partner_score != null);
+  const revealed = justRevealed || (!hadPartnerScore && date.partner_score != null);
 
   const partnerName = me.partner?.display_name ?? "Seu par";
   const showForm = date.my_score == null || editing;
@@ -97,7 +103,7 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
     );
   } else {
     partnerBox = (
-      <Box who={partnerName} className={justRevealed ? "animate-reveal" : ""}>
+      <Box who={partnerName} className={revealed ? "animate-reveal" : ""}>
         <Score score={date.partner_score} comment={date.partner_comment} />
       </Box>
     );
@@ -130,15 +136,14 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
         {partnerBox}
       </div>
 
-      {date.couple_avg != null && (
-        <div
-          className={`mt-4 flex items-center justify-between rounded-2xl bg-gradient-to-br from-wine to-coral p-4 text-white ${
-            justRevealed ? "animate-reveal" : ""
-          }`}
-        >
-          <span>Média do casal</span>
-          <b className="font-serif text-[34px] leading-none">{formatScore(date.couple_avg)}</b>
-        </div>
+      {date.couple_avg != null && date.my_score != null && date.partner_score != null && (
+        <Verdict
+          date={date}
+          mine={date.my_score}
+          partner={date.partner_score}
+          partnerName={partnerName}
+          animate={revealed}
+        />
       )}
 
       {showForm && (
@@ -185,5 +190,40 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
         </div>
       )}
     </section>
+  );
+}
+
+function Verdict({
+  date,
+  mine,
+  partner,
+  partnerName,
+  animate,
+}: {
+  date: DateItem;
+  mine: number;
+  partner: number;
+  partnerName: string;
+  animate: boolean;
+}) {
+  const v = compareScores({ mine, partner, partnerName, seed: date.id });
+  return (
+    <div
+      className={`mt-4 overflow-hidden rounded-2xl bg-gradient-to-br from-wine to-coral text-white ${animate ? "animate-reveal" : ""}`}
+    >
+      <div className="flex items-center gap-3 p-4">
+        <span className="text-3xl" aria-hidden>
+          {v.emoji}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-serif text-lg leading-tight">{v.title}</p>
+          {v.detail && <p className="mt-0.5 text-sm text-white/85">{v.detail}</p>}
+        </div>
+      </div>
+      <div className="flex items-center justify-between border-t border-white/20 bg-black/10 px-4 py-3">
+        <span className="text-sm">Média do casal</span>
+        <b className="font-serif text-[30px] leading-none">{formatScore(date.couple_avg)}</b>
+      </div>
+    </div>
   );
 }

@@ -9,7 +9,7 @@ dá uma nota de **1 a 10**. A nota do outro só aparece depois que você avalia.
 
 ### 1. Supabase
 1. Crie um projeto gratuito em [supabase.com](https://supabase.com).
-2. Em **SQL Editor**, rode, na ordem, cada arquivo de [`supabase/migrations/`](supabase/migrations/) (`0001_init.sql`, `0002_leave_couple.sql`…): cole o conteúdo e clique em **Run**.
+2. Em **SQL Editor**, rode, na ordem, cada arquivo de [`supabase/migrations/`](supabase/migrations/) (`0001_init.sql`, `0002_leave_couple.sql`, `0003_realtime.sql`…): cole o conteúdo e clique em **Run**.
    O script cria as tabelas, as regras de acesso (RLS), as funções e o bucket privado `date-photos`.
 3. Em **Authentication → Sign In / Providers → Email**, desative **Confirm email**.
    Assim a conta funciona na hora, sem precisar abrir o link de confirmação.
