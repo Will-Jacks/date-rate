@@ -86,6 +86,10 @@ export async function createCouple(name: string | null): Promise<string> {
   return run(() => supabase().rpc("create_couple", { p_name: name }));
 }
 
+export async function leaveCouple() {
+  await run(() => supabase().rpc("leave_couple"));
+}
+
 export async function joinCouple(code: string) {
   await run(() => supabase().rpc("join_couple", { p_code: code }));
 }

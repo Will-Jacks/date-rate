@@ -1,13 +1,13 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, LogOut } from "lucide-react";
+import { ArrowLeft, LogOut, UserMinus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { InviteCode } from "@/components/invite-code";
 import { useToast } from "@/components/toast";
 import { Button, Field, Input, PageHeader } from "@/components/ui";
-import { signOut, updateDisplayName } from "@/lib/api";
+import { leaveCouple, signOut, updateDisplayName } from "@/lib/api";
 import { categoryInfo } from "@/lib/categories";
 import { errorMessage } from "@/lib/errors";
 import { formatCost, formatScore } from "@/lib/format";
@@ -21,6 +21,27 @@ export default function ProfilePage() {
   const toast = useToast();
   const [name, setName] = useState(me.profile.display_name);
   const [saving, setSaving] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+
+  async function leave() {
+    const code = me.couple.invite_code;
+    const ok = window.confirm(
+      `Sair do casal?
+
+Você deixa de ver os dates deste diário e poderá entrar em outro com um novo código. ` +
+        `Nada é apagado: para voltar, use o código ${code}.`,
+    );
+    if (!ok) return;
+    setLeaving(true);
+    try {
+      await leaveCouple();
+      qc.clear();
+      router.replace("/onboarding");
+    } catch (err) {
+      toast(errorMessage(err), "error");
+      setLeaving(false);
+    }
+  }
 
   async function saveName(e: React.FormEvent) {
     e.preventDefault();
@@ -98,6 +119,14 @@ export default function ProfilePage() {
               <InviteCode code={me.couple.invite_code} />
             </>
           )}
+          <button
+            onClick={leave}
+            disabled={leaving}
+            className="mt-4 flex min-h-10 items-center gap-1.5 text-sm font-semibold text-muted disabled:opacity-50"
+          >
+            <UserMinus className="size-4" aria-hidden />
+            {leaving ? "Saindo…" : "Sair do casal"}
+          </button>
         </section>
 
         <Button

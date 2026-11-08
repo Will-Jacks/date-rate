@@ -20,6 +20,7 @@ export class AppError extends Error {
 const KNOWN: [string, AppErrorCode, string][] = [
   ["already_in_couple", "VALIDATION", "Você já faz parte de um casal."],
   ["invalid_code", "VALIDATION", "Código não encontrado. Confira e tente de novo."],
+  ["not_in_couple", "VALIDATION", "Você não faz parte de um casal."],
   ["couple_full", "VALIDATION", "Esse casal já tem duas pessoas."],
   ["invalid login credentials", "AUTH", "E-mail ou senha incorretos."],
   ["user already registered", "VALIDATION", "Esse e-mail já tem conta. Entre com sua senha."],
