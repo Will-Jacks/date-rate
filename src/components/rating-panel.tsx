@@ -4,6 +4,7 @@ import { Hourglass, Lock, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { saveRating } from "@/lib/api";
+import { notify } from "@/lib/push";
 import { compareScores } from "@/lib/compare";
 import { errorMessage } from "@/lib/errors";
 import { formatScore } from "@/lib/format";
@@ -91,6 +92,7 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
     try {
       const wasHidden = date.my_score == null && date.partner_rated;
       await saveRating(date.id, me.userId, score, comment.trim() || null);
+      if (date.my_score == null) notify({ type: "rated", dateId: date.id });
       invalidate(date.id);
       setEditing(false);
       if (wasHidden) setJustRevealed(true);

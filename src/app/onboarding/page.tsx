@@ -8,6 +8,7 @@ import { InviteCode } from "@/components/invite-code";
 import { Button, ErrorState, Field, FullScreenLoader, Input } from "@/components/ui";
 import { createCouple, joinCouple, signOut } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
+import { notify } from "@/lib/push";
 import { keys, useMe } from "@/lib/hooks";
 
 export default function OnboardingPage() {
@@ -53,6 +54,7 @@ export default function OnboardingPage() {
     setError(null);
     try {
       await joinCouple(code);
+      notify({ type: "partner_joined" });
       await refreshMe();
       router.replace("/");
     } catch (err) {

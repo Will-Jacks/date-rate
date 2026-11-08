@@ -4,6 +4,7 @@ import { UserRound } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { DateCard } from "@/components/date-card";
+import { PushPrompt } from "@/components/push-settings";
 import { useToast } from "@/components/toast";
 import { EmptyState, ErrorState, FeedSkeleton, PageHeader } from "@/components/ui";
 import { errorMessage } from "@/lib/errors";
@@ -44,6 +45,8 @@ export default function FeedPage() {
           </Link>
         }
       />
+
+      <PushPrompt partnerName={partnerName} />
 
       {!!dates.data?.length && (
         <div className="flex gap-2 px-4 pb-3">

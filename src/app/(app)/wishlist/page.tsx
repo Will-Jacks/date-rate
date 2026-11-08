@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useToast } from "@/components/toast";
 import { Button, EmptyState, ErrorState, Input, PageHeader, Spinner } from "@/components/ui";
 import { addWish, deleteWish } from "@/lib/api";
+import { notify } from "@/lib/push";
 import { errorMessage } from "@/lib/errors";
 import { keys, useCurrentMe, useWishlist } from "@/lib/hooks";
 import type { WishItem } from "@/lib/types";
@@ -29,7 +30,8 @@ export default function WishlistPage() {
     if (!place.trim()) return;
     setAdding(true);
     try {
-      await addWish(me.couple.id, place.trim(), notes.trim() || null);
+      const wishId = await addWish(me.couple.id, place.trim(), notes.trim() || null);
+      notify({ type: "wish_added", wishId });
       setPlace("");
       setNotes("");
       refresh();

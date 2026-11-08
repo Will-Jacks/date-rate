@@ -5,6 +5,7 @@ import { ArrowLeft, LogOut, UserMinus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { InviteCode } from "@/components/invite-code";
+import { PushSettings } from "@/components/push-settings";
 import { useToast } from "@/components/toast";
 import { Button, Field, Input, PageHeader } from "@/components/ui";
 import { leaveCouple, signOut, updateDisplayName } from "@/lib/api";
@@ -95,6 +96,8 @@ Você deixa de ver os dates deste diário e poderá entrar em outro com um novo 
             </div>
           ))}
         </section>
+
+        <PushSettings />
 
         <form onSubmit={saveName} className="flex flex-col gap-3 rounded-2xl border border-line bg-card p-4">
           <Field label="Seu nome" hint={me.email}>

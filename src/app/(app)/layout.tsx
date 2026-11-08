@@ -6,6 +6,7 @@ import { useSession } from "@/components/auth-provider";
 import { BottomNav } from "@/components/bottom-nav";
 import { ErrorState, FullScreenLoader } from "@/components/ui";
 import { useMe } from "@/lib/hooks";
+import { syncPush } from "@/lib/push";
 import { useRealtime } from "@/lib/realtime";
 
 /** Área logada: exige sessão e casal formado. */
@@ -19,6 +20,10 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
   const me = useMe();
   const noCouple = me.data && !me.data.couple;
   useRealtime(me.data);
+  const userId = me.data?.userId;
+  useEffect(() => {
+    if (userId) syncPush();
+  }, [userId]);
 
   useEffect(() => {
     if (loading) return;

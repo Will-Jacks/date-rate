@@ -300,8 +300,11 @@ export async function listWishlist(): Promise<WishItem[]> {
   );
 }
 
-export async function addWish(coupleId: string, place_name: string, notes: string | null) {
-  await run(() => supabase().from("wishlist").insert({ couple_id: coupleId, place_name, notes }));
+export async function addWish(coupleId: string, place_name: string, notes: string | null): Promise<string> {
+  const row: { id: string } = await run(() =>
+    supabase().from("wishlist").insert({ couple_id: coupleId, place_name, notes }).select("id").single(),
+  );
+  return row.id;
 }
 
 export async function deleteWish(id: string) {

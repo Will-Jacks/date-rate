@@ -7,6 +7,7 @@ import { DateForm, type DateFormResult } from "@/components/date-form";
 import { useToast } from "@/components/toast";
 import { PageHeader } from "@/components/ui";
 import { createDate } from "@/lib/api";
+import { notify } from "@/lib/push";
 import { errorMessage } from "@/lib/errors";
 import { keys, useCurrentMe, useInvalidateDates } from "@/lib/hooks";
 import { useQueryClient } from "@tanstack/react-query";
@@ -37,6 +38,7 @@ function NewDate() {
         wishId,
         onProgress: (done, total) => setProgress(`Enviando fotos ${done}/${total}…`),
       });
+      notify({ type: "date_created", dateId: id });
       invalidate();
       if (wishId) qc.invalidateQueries({ queryKey: keys.wishlist });
       toast("Date registrado! Agora dê sua nota.");
