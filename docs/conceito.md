@@ -40,7 +40,7 @@ wishlist     (id, couple_id, place_name, notes, added_by, done_date_id)
 - RLS: cada usuário só acessa dados do próprio `couple_id`
 - A nota do parceiro vem de uma view/função que só a devolve se você já avaliou
 
-## Decisões pendentes
-1. Escala da nota: 1–5 ou 1–10? As notas ficam ocultas até os dois avaliarem?
-2. Expo ou Next.js?
-3. Próximo passo: protótipo visual do card/feed ou schema SQL completo com RLS?
+## Decisões tomadas
+1. Nota de **1 a 10**; as notas ficam **ocultas até os dois avaliarem**
+2. Frontend: **aplicação web** (Next.js como PWA)
+3. Primeiro passo: protótipo visual em `prototype/index.html`
