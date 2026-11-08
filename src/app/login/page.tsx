@@ -35,7 +35,10 @@ export default function LoginPage() {
         await signIn(email.trim(), password);
       } else {
         const loggedIn = await signUp(name.trim(), email.trim(), password);
-        if (!loggedIn) setInfo("Conta criada! Confirme pelo link que enviamos ao seu e-mail e depois entre aqui.");
+        if (!loggedIn)
+          setInfo(
+            "Conta criada! Confirme pelo link que enviamos ao seu e-mail e depois entre aqui.",
+          );
       }
     } catch (err) {
       setError(errorMessage(err));
@@ -50,10 +53,15 @@ export default function LoginPage() {
       <p className="mb-8 mt-2 text-muted">O diário dos nossos dates.</p>
 
       {configError && (
-        <p className="mb-6 rounded-xl border border-wine/30 bg-wine/5 p-3 text-sm text-wine">{configError}</p>
+        <p className="mb-6 rounded-xl border border-wine/30 bg-wine/5 p-3 text-sm text-wine">
+          {configError}
+        </p>
       )}
 
-      <div className="mb-6 grid grid-cols-2 rounded-xl bg-line/60 p-1" role="tablist">
+      <div
+        className="mb-6 grid grid-cols-2 rounded-xl bg-line/60 p-1"
+        role="tablist"
+      >
         {(["in", "up"] as const).map((m) => (
           <button
             key={m}
@@ -73,13 +81,27 @@ export default function LoginPage() {
       <form onSubmit={submit} className="flex flex-col gap-4">
         {mode === "up" && (
           <Field label="Seu nome">
-            <Input value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" maxLength={40} />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="given-name"
+              maxLength={40}
+            />
           </Field>
         )}
         <Field label="E-mail">
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
+          <Input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            required
+          />
         </Field>
-        <Field label="Senha" hint={mode === "up" ? "Pelo menos 6 caracteres." : undefined}>
+        <Field
+          label="Senha"
+          hint={mode === "up" ? "Pelo menos 6 caracteres." : undefined}
+        >
           <Input
             type="password"
             value={password}
@@ -91,7 +113,12 @@ export default function LoginPage() {
         </Field>
         {error && <p className="text-sm text-wine">{error}</p>}
         {info && <p className="rounded-xl bg-card p-3 text-sm">{info}</p>}
-        <Button type="submit" loading={busy} disabled={!!configError} className="mt-2">
+        <Button
+          type="submit"
+          loading={busy}
+          disabled={!!configError}
+          className="mt-2"
+        >
           {mode === "in" ? "Entrar" : "Criar conta"}
         </Button>
       </form>

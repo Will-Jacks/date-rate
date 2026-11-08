@@ -1,106 +1,477 @@
 <!doctype html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Date Rate</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#FAF7F2;--ink:#2B1D1A;--muted:#8A7B74;--wine:#8C2F39;--coral:#E0796B;--card:#fff;--line:#EADFD6}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-.app{max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:90px}
-header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);padding:18px 16px 12px;display:flex;align-items:baseline;justify-content:space-between}
-h1{font-family:Fraunces,serif;font-size:28px;color:var(--wine)}
-header small{color:var(--muted);font-size:13px}
-.feed{display:flex;flex-direction:column;gap:18px;padding:4px 16px}
-.card{position:relative;aspect-ratio:4/5;border-radius:16px;overflow:hidden;cursor:pointer;box-shadow:0 8px 24px rgba(43,29,26,.12);transition:transform .2s}
-.card:active{transform:scale(.98)}
-.photo{position:absolute;inset:0;background-size:cover;background-position:center}
-.card::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.78) 0%,rgba(0,0,0,.25) 40%,transparent 65%)}
-.overlay{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:20px;color:#fff}
-.overlay h2{font-family:Fraunces,serif;font-size:32px;line-height:1.05;margin-bottom:8px}
-.meta{display:flex;gap:10px;align-items:center;font-size:13px;opacity:.92;flex-wrap:wrap}
-.chip{background:rgba(255,255,255,.18);backdrop-filter:blur(6px);padding:4px 10px;border-radius:99px}
-.score{position:absolute;top:14px;right:14px;z-index:2;background:rgba(255,255,255,.92);color:var(--wine);font-weight:600;border-radius:99px;padding:6px 12px;font-size:14px}
-.score.pending{color:var(--muted)}
-.heart{position:absolute;inset:0;z-index:3;display:grid;place-items:center;font-size:96px;opacity:0;pointer-events:none;transform:scale(.4);transition:all .35s cubic-bezier(.2,1.6,.4,1)}
-.heart.show{opacity:1;transform:scale(1)}
-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;padding:10px 0 18px}
-nav button{background:none;border:0;font:inherit;font-size:12px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
-nav button.on{color:var(--wine)}
-nav .ico{font-size:20px}
-nav .plus{width:56px;height:56px;border-radius:50%;background:var(--wine);color:#fff;font-size:30px;margin-top:-30px;box-shadow:0 6px 18px rgba(140,47,57,.4);justify-content:center}
-/* detalhe */
-.sheet{position:fixed;inset:0;z-index:10;background:var(--bg);overflow-y:auto;transform:translateY(100%);transition:transform .35s ease}
-.sheet.open{transform:none}
-.sheet .inner{max-width:480px;margin:0 auto;padding-bottom:40px}
-.hero{position:relative;aspect-ratio:4/5}
-.hero .photo{position:absolute;inset:0}
-.back{position:absolute;top:14px;left:14px;z-index:3;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.9);font-size:18px;cursor:pointer}
-.body{padding:20px 16px}
-.body h2{font-family:Fraunces,serif;font-size:30px}
-.body .sub{color:var(--muted);font-size:14px;margin:4px 0 20px}
-.ratings{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.rate{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;min-height:130px}
-.rate .who{font-size:13px;color:var(--muted);margin-bottom:6px}
-.rate .num{font-family:Fraunces,serif;font-size:40px;color:var(--wine)}
-.rate .num small{font-size:16px;color:var(--muted)}
-.rate p{font-size:13px;line-height:1.4;margin-top:4px}
-.locked{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:13px;gap:6px;height:100%}
-.locked .lock{font-size:28px}
-.reveal{animation:pop .6s cubic-bezier(.2,1.6,.4,1)}
-@keyframes pop{0%{transform:rotateY(90deg);opacity:0}100%{transform:none;opacity:1}}
-.avg{margin-top:16px;background:linear-gradient(135deg,var(--wine),var(--coral));color:#fff;border-radius:14px;padding:16px;display:flex;justify-content:space-between;align-items:center}
-.avg b{font-family:Fraunces,serif;font-size:34px}
-.form{margin-top:20px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
-.form h3{font-family:Fraunces,serif;font-size:18px;margin-bottom:12px}
-.scale{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-bottom:12px}
-.scale button{aspect-ratio:1;border-radius:8px;border:1px solid var(--line);background:var(--bg);font:600 14px Inter;color:var(--ink);cursor:pointer}
-.scale button.sel{background:var(--wine);color:#fff;border-color:var(--wine)}
-textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;font:14px Inter;background:var(--bg);resize:none;height:70px}
-.btn{margin-top:12px;width:100%;padding:13px;border:0;border-radius:12px;background:var(--wine);color:#fff;font:600 15px Inter;cursor:pointer}
-.btn:disabled{opacity:.4}
-.hint{font-size:12px;color:var(--muted);margin-top:8px;text-align:center}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Date Rate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #FAF7F2;
+      --ink: #2B1D1A;
+      --muted: #8A7B74;
+      --wine: #8C2F39;
+      --coral: #E0796B;
+      --card: #fff;
+      --line: #EADFD6
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased
+    }
+
+    .app {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding-bottom: 90px
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(10px);
+      padding: 18px 16px 12px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between
+    }
+
+    h1 {
+      font-family: Fraunces, serif;
+      font-size: 28px;
+      color: var(--wine)
+    }
+
+    header small {
+      color: var(--muted);
+      font-size: 13px
+    }
+
+    .feed {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 4px 16px
+    }
+
+    .card {
+      position: relative;
+      aspect-ratio: 4/5;
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(43, 29, 26, .12);
+      transition: transform .2s
+    }
+
+    .card:active {
+      transform: scale(.98)
+    }
+
+    .photo {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0, 0, 0, .78) 0%, rgba(0, 0, 0, .25) 40%, transparent 65%)
+    }
+
+    .overlay {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2;
+      padding: 20px;
+      color: #fff
+    }
+
+    .overlay h2 {
+      font-family: Fraunces, serif;
+      font-size: 32px;
+      line-height: 1.05;
+      margin-bottom: 8px
+    }
+
+    .meta {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+      opacity: .92;
+      flex-wrap: wrap
+    }
+
+    .chip {
+      background: rgba(255, 255, 255, .18);
+      backdrop-filter: blur(6px);
+      padding: 4px 10px;
+      border-radius: 99px
+    }
+
+    .score {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 2;
+      background: rgba(255, 255, 255, .92);
+      color: var(--wine);
+      font-weight: 600;
+      border-radius: 99px;
+      padding: 6px 12px;
+      font-size: 14px
+    }
+
+    .score.pending {
+      color: var(--muted)
+    }
+
+    .heart {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: grid;
+      place-items: center;
+      font-size: 96px;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(.4);
+      transition: all .35s cubic-bezier(.2, 1.6, .4, 1)
+    }
+
+    .heart.show {
+      opacity: 1;
+      transform: scale(1)
+    }
+
+    nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background: var(--card);
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 10px 0 18px
+    }
+
+    nav button {
+      background: none;
+      border: 0;
+      font: inherit;
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer
+    }
+
+    nav button.on {
+      color: var(--wine)
+    }
+
+    nav .ico {
+      font-size: 20px
+    }
+
+    nav .plus {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--wine);
+      color: #fff;
+      font-size: 30px;
+      margin-top: -30px;
+      box-shadow: 0 6px 18px rgba(140, 47, 57, .4);
+      justify-content: center
+    }
+
+    /* detalhe */
+    .sheet {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      background: var(--bg);
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform .35s ease
+    }
+
+    .sheet.open {
+      transform: none
+    }
+
+    .sheet .inner {
+      max-width: 480px;
+      margin: 0 auto;
+      padding-bottom: 40px
+    }
+
+    .hero {
+      position: relative;
+      aspect-ratio: 4/5
+    }
+
+    .hero .photo {
+      position: absolute;
+      inset: 0
+    }
+
+    .back {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 3;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 0;
+      background: rgba(255, 255, 255, .9);
+      font-size: 18px;
+      cursor: pointer
+    }
+
+    .body {
+      padding: 20px 16px
+    }
+
+    .body h2 {
+      font-family: Fraunces, serif;
+      font-size: 30px
+    }
+
+    .body .sub {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 4px 0 20px
+    }
+
+    .ratings {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px
+    }
+
+    .rate {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      min-height: 130px
+    }
+
+    .rate .who {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px
+    }
+
+    .rate .num {
+      font-family: Fraunces, serif;
+      font-size: 40px;
+      color: var(--wine)
+    }
+
+    .rate .num small {
+      font-size: 16px;
+      color: var(--muted)
+    }
+
+    .rate p {
+      font-size: 13px;
+      line-height: 1.4;
+      margin-top: 4px
+    }
+
+    .locked {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      gap: 6px;
+      height: 100%
+    }
+
+    .locked .lock {
+      font-size: 28px
+    }
+
+    .reveal {
+      animation: pop .6s cubic-bezier(.2, 1.6, .4, 1)
+    }
+
+    @keyframes pop {
+      0% {
+        transform: rotateY(90deg);
+        opacity: 0
+      }
+
+      100% {
+        transform: none;
+        opacity: 1
+      }
+    }
+
+    .avg {
+      margin-top: 16px;
+      background: linear-gradient(135deg, var(--wine), var(--coral));
+      color: #fff;
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+    }
+
+    .avg b {
+      font-family: Fraunces, serif;
+      font-size: 34px
+    }
+
+    .form {
+      margin-top: 20px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px
+    }
+
+    .form h3 {
+      font-family: Fraunces, serif;
+      font-size: 18px;
+      margin-bottom: 12px
+    }
+
+    .scale {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 4px;
+      margin-bottom: 12px
+    }
+
+    .scale button {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      font: 600 14px Inter;
+      color: var(--ink);
+      cursor: pointer
+    }
+
+    .scale button.sel {
+      background: var(--wine);
+      color: #fff;
+      border-color: var(--wine)
+    }
+
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font: 14px Inter;
+      background: var(--bg);
+      resize: none;
+      height: 70px
+    }
+
+    .btn {
+      margin-top: 12px;
+      width: 100%;
+      padding: 13px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--wine);
+      color: #fff;
+      font: 600 15px Inter;
+      cursor: pointer
+    }
+
+    .btn:disabled {
+      opacity: .4
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      text-align: center
+    }
+  </style>
 </head>
+
 <body>
-<div class="app">
-  <header><h1>Date Rate</h1><small>Will & ♥</small></header>
-  <main class="feed" id="feed"></main>
-</div>
-<nav>
-  <button class="on"><span class="ico">▦</span>Feed</button>
-  <button class="plus" title="Novo date">+</button>
-  <button><span class="ico">☆</span>Queremos ir</button>
-</nav>
+  <div class="app">
+    <header>
+      <h1>Date Rate</h1><small>Will & ♥</small>
+    </header>
+    <main class="feed" id="feed"></main>
+  </div>
+  <nav>
+    <button class="on"><span class="ico">▦</span>Feed</button>
+    <button class="plus" title="Novo date">+</button>
+    <button><span class="ico">☆</span>Queremos ir</button>
+  </nav>
 
-<section class="sheet" id="sheet"><div class="inner" id="detail"></div></section>
+  <section class="sheet" id="sheet">
+    <div class="inner" id="detail"></div>
+  </section>
 
-<script>
-// Dados fictícios. As fotos são gradientes de exemplo; no app real elas vêm do Supabase Storage.
-const photos=[
- "linear-gradient(160deg,#f6b47a,#c2554f 55%,#3d1f2b)",
- "linear-gradient(200deg,#7fb7c9,#2f5d73 60%,#14232e)",
- "linear-gradient(170deg,#e7c38f,#a2683d 55%,#2e1b12)",
- "linear-gradient(150deg,#c9a7e0,#6b4a8c 60%,#1e1530)"
-];
-const dates=[
- {place:"Mangai",date:"02 nov 2026",cat:"Jantar",me:{s:9,c:"A carne de sol estava perfeita."},her:{s:8,c:"Amei, mas demorou um pouco."}},
- {place:"Praia de Pipa",date:"18 out 2026",cat:"Viagem",me:{s:10,c:"Pôr do sol inesquecível."},her:null},
- {place:"Cinépolis Midway",date:"05 out 2026",cat:"Cinema",me:null,her:{s:6,c:"Filme meio fraco."}},
- {place:"Noite de fondue",date:"21 set 2026",cat:"Em casa",me:{s:8,c:"Bagunça boa."},her:{s:10,c:"Melhor noite!"}}
-];
-const both=d=>d.me&&d.her;
-const avg=d=>((d.me.s+d.her.s)/2).toFixed(1).replace(".0","");
-function badge(d){
-  if(both(d)) return `<div class="score">♥ ${avg(d)}</div>`;
-  if(!d.me) return `<div class="score pending">Falta sua nota</div>`;
-  return `<div class="score pending">Esperando ela</div>`;
-}
-function renderFeed(){
-  feed.innerHTML=dates.map((d,i)=>`
+  <script>
+    // Dados fictícios. As fotos são gradientes de exemplo; no app real elas vêm do Supabase Storage.
+    const photos = [
+      "linear-gradient(160deg,#f6b47a,#c2554f 55%,#3d1f2b)",
+      "linear-gradient(200deg,#7fb7c9,#2f5d73 60%,#14232e)",
+      "linear-gradient(170deg,#e7c38f,#a2683d 55%,#2e1b12)",
+      "linear-gradient(150deg,#c9a7e0,#6b4a8c 60%,#1e1530)"
+    ];
+    const dates = [
+      { place: "Mangai", date: "02 nov 2026", cat: "Jantar", me: { s: 9, c: "A carne de sol estava perfeita." }, her: { s: 8, c: "Amei, mas demorou um pouco." } },
+      { place: "Praia de Pipa", date: "18 out 2026", cat: "Viagem", me: { s: 10, c: "Pôr do sol inesquecível." }, her: null },
+      { place: "Cinépolis Midway", date: "05 out 2026", cat: "Cinema", me: null, her: { s: 6, c: "Filme meio fraco." } },
+      { place: "Noite de fondue", date: "21 set 2026", cat: "Em casa", me: { s: 8, c: "Bagunça boa." }, her: { s: 10, c: "Melhor noite!" } }
+    ];
+    const both = d => d.me && d.her;
+    const avg = d => ((d.me.s + d.her.s) / 2).toFixed(1).replace(".0", "");
+    function badge(d) {
+      if (both(d)) return `<div class="score">♥ ${avg(d)}</div>`;
+      if (!d.me) return `<div class="score pending">Falta sua nota</div>`;
+      return `<div class="score pending">Esperando ela</div>`;
+    }
+    function renderFeed() {
+      feed.innerHTML = dates.map((d, i) => `
    <article class="card" data-i="${i}">
      <div class="photo" style="background-image:${photos[i]}"></div>
      ${badge(d)}
@@ -108,43 +479,47 @@ function renderFeed(){
      <div class="overlay"><h2>${d.place}</h2>
        <div class="meta"><span>${d.date}</span><span class="chip">${d.cat}</span></div></div>
    </article>`).join("");
-  feed.querySelectorAll(".card").forEach(c=>{
-    let t=0;
-    c.onclick=()=>{const n=Date.now();
-      if(n-t<300){const h=c.querySelector(".heart");h.classList.add("show");setTimeout(()=>h.classList.remove("show"),700);clearTimeout(c._o);}
-      else c._o=setTimeout(()=>openDetail(+c.dataset.i),300);
-      t=n;};
-  });
-}
-function rateBox(who,r,visible,anim){
-  if(!r) return `<div class="rate"><div class="who">${who}</div><div class="locked"><span class="lock">⏳</span>Ainda não avaliou</div></div>`;
-  if(!visible) return `<div class="rate"><div class="who">${who}</div><div class="locked"><span class="lock">🔒</span>Nota escondida até vocês dois avaliarem</div></div>`;
-  return `<div class="rate ${anim?'reveal':''}"><div class="who">${who}</div><div class="num">${r.s}<small>/10</small></div><p>${r.c}</p></div>`;
-}
-let sel=0;
-function openDetail(i,anim=false){
-  const d=dates[i];sel=0;
-  const vis=both(d);
-  detail.innerHTML=`
+      feed.querySelectorAll(".card").forEach(c => {
+        let t = 0;
+        c.onclick = () => {
+          const n = Date.now();
+          if (n - t < 300) { const h = c.querySelector(".heart"); h.classList.add("show"); setTimeout(() => h.classList.remove("show"), 700); clearTimeout(c._o); }
+          else c._o = setTimeout(() => openDetail(+c.dataset.i), 300);
+          t = n;
+        };
+      });
+    }
+    function rateBox(who, r, visible, anim) {
+      if (!r) return `<div class="rate"><div class="who">${who}</div><div class="locked"><span class="lock">⏳</span>Ainda não avaliou</div></div>`;
+      if (!visible) return `<div class="rate"><div class="who">${who}</div><div class="locked"><span class="lock">🔒</span>Nota escondida até vocês dois avaliarem</div></div>`;
+      return `<div class="rate ${anim ? 'reveal' : ''}"><div class="who">${who}</div><div class="num">${r.s}<small>/10</small></div><p>${r.c}</p></div>`;
+    }
+    let sel = 0;
+    function openDetail(i, anim = false) {
+      const d = dates[i]; sel = 0;
+      const vis = both(d);
+      detail.innerHTML = `
    <div class="hero"><div class="photo" style="background-image:${photos[i]}"></div><button class="back" onclick="closeDetail()">←</button></div>
    <div class="body">
      <h2>${d.place}</h2><div class="sub">${d.date} · ${d.cat}</div>
-     <div class="ratings">${rateBox("Você",d.me,vis||!!d.me,anim)}${rateBox("Ela",d.her,vis,anim)}</div>
-     ${vis?`<div class="avg ${anim?'reveal':''}"><span>Média do casal</span><b>${avg(d)}</b></div>`:""}
-     ${!d.me?`<div class="form"><h3>Sua nota</h3>
-       <div class="scale">${[...Array(10)].map((_,k)=>`<button data-v="${k+1}">${k+1}</button>`).join("")}</div>
+     <div class="ratings">${rateBox("Você", d.me, vis || !!d.me, anim)}${rateBox("Ela", d.her, vis, anim)}</div>
+     ${vis ? `<div class="avg ${anim ? 'reveal' : ''}"><span>Média do casal</span><b>${avg(d)}</b></div>` : ""}
+     ${!d.me ? `<div class="form"><h3>Sua nota</h3>
+       <div class="scale">${[...Array(10)].map((_, k) => `<button data-v="${k + 1}">${k + 1}</button>`).join("")}</div>
        <textarea id="cm" placeholder="Um comentário curto (opcional)"></textarea>
        <button class="btn" id="send" disabled>Avaliar e revelar</button>
-       <div class="hint">A nota dela aparece assim que você enviar a sua.</div></div>`:""}
+       <div class="hint">A nota dela aparece assim que você enviar a sua.</div></div>`: ""}
    </div>`;
-  detail.querySelectorAll(".scale button").forEach(b=>b.onclick=()=>{
-    sel=+b.dataset.v;detail.querySelectorAll(".scale button").forEach(x=>x.classList.toggle("sel",x===b));send.disabled=false;});
-  const s=document.getElementById("send");
-  if(s) s.onclick=()=>{d.me={s:sel,c:cm.value||"—"};renderFeed();openDetail(i,true);};
-  sheet.classList.add("open");sheet.scrollTop=0;
-}
-function closeDetail(){sheet.classList.remove("open")}
-renderFeed();
-</script>
+      detail.querySelectorAll(".scale button").forEach(b => b.onclick = () => {
+        sel = +b.dataset.v; detail.querySelectorAll(".scale button").forEach(x => x.classList.toggle("sel", x === b)); send.disabled = false;
+      });
+      const s = document.getElementById("send");
+      if (s) s.onclick = () => { d.me = { s: sel, c: cm.value || "—" }; renderFeed(); openDetail(i, true); };
+      sheet.classList.add("open"); sheet.scrollTop = 0;
+    }
+    function closeDetail() { sheet.classList.remove("open") }
+    renderFeed();
+  </script>
 </body>
+
 </html>
