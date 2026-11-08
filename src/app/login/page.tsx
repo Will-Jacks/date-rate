@@ -4,13 +4,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSession } from "@/components/auth-provider";
 import { Button, Field, FullScreenLoader, Input } from "@/components/ui";
-import { signIn, signUp } from "@/lib/api";
+import { requestPasswordReset, signIn, signUp } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
 
 export default function LoginPage() {
   const router = useRouter();
   const { session, loading, configError } = useSession();
   const [mode, setMode] = useState<"in" | "up">("in");
+  const [forgot, setForgot] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -95,6 +96,38 @@ export default function LoginPage() {
         ))}
       </div>
 
+      {forgot ? (
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setError(null);
+            setInfo(null);
+            setBusy(true);
+            try {
+              await requestPasswordReset(email.trim());
+              setInfo("Pronto! Se esse e-mail tiver conta, chega um link para criar uma senha nova. Confira também o spam.");
+            } catch (err) {
+              setError(errorMessage(err));
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <p className="text-sm text-muted">Digite seu e-mail e enviaremos um link para você criar uma senha nova.</p>
+          <Field label="E-mail">
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required autoFocus />
+          </Field>
+          {error && <p className="text-sm text-wine">{error}</p>}
+          {info && <p className="rounded-xl bg-card p-3 text-sm">{info}</p>}
+          <Button type="submit" loading={busy}>
+            Enviar link
+          </Button>
+          <button type="button" onClick={() => setForgot(false)} className="text-sm font-semibold text-wine">
+            Voltar para o login
+          </button>
+        </form>
+      ) : (
       <form onSubmit={submit} className="flex flex-col gap-4">
         {mode === "up" && (
           <Field label="Seu nome">
@@ -138,7 +171,21 @@ export default function LoginPage() {
         >
           {mode === "in" ? "Entrar" : "Criar conta"}
         </Button>
+        {mode === "in" && (
+          <button
+            type="button"
+            onClick={() => {
+              setForgot(true);
+              setError(null);
+              setInfo(null);
+            }}
+            className="text-sm font-semibold text-wine"
+          >
+            Esqueci minha senha
+          </button>
+        )}
       </form>
+      )}
       </div>
     </main>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { Hourglass, Lock, Pencil } from "lucide-react";
+import { ChevronDown, Hourglass, Lock, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { saveRating } from "@/lib/api";
@@ -8,10 +8,12 @@ import { notify } from "@/lib/push";
 import { compareScores } from "@/lib/compare";
 import { errorMessage } from "@/lib/errors";
 import { formatScore } from "@/lib/format";
-import { useInvalidateDates } from "@/lib/hooks";
-import type { DateItem, Me } from "@/lib/types";
+import { useInvalidateDates, useReactions } from "@/lib/hooks";
+import type { Criteria, DateItem, Me } from "@/lib/types";
 import { useToast } from "./toast";
 import { Confetti } from "./confetti";
+import { CriteriaInput, hasCriteria } from "./criteria";
+import { ReactionBar } from "./reactions";
 import { Avatar, Button, TextArea } from "./ui";
 
 /** Cor de cada nota: frio nas baixas, vinho nas altas. */
@@ -74,6 +76,11 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
   const [editing, setEditing] = useState(false);
   const [score, setScore] = useState<number | null>(date.my_score);
   const [comment, setComment] = useState(date.my_comment ?? "");
+  const [criteria, setCriteria] = useState<Criteria>(date.my_criteria ?? {});
+  const [showCriteria, setShowCriteria] = useState(hasCriteria(date.my_criteria));
+  const reactions = useReactions(date.id);
+  const names: Record<string, string> = { [me.userId]: me.profile.display_name };
+  if (me.partner) names[me.partner.id] = me.partner.display_name;
   const [saving, setSaving] = useState(false);
   const [justRevealed, setJustRevealed] = useState(false);
   const [popKey, setPopKey] = useState(0);
@@ -91,7 +98,7 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
     setSaving(true);
     try {
       const wasHidden = date.my_score == null && date.partner_rated;
-      await saveRating(date.id, me.userId, score, comment.trim() || null);
+      await saveRating(date.id, me.userId, score, comment.trim() || null, showCriteria ? criteria : {});
       if (date.my_score == null) notify({ type: "rated", dateId: date.id });
       invalidate(date.id);
       setEditing(false);
@@ -133,6 +140,16 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
     partnerBox = (
       <Box who={partnerName} tone="coral" className={revealed ? "animate-reveal" : ""}>
         <Score score={date.partner_score} comment={date.partner_comment} />
+        {me.partner && (
+          <ReactionBar
+            dateId={date.id}
+            kind="rating"
+            targetRef={me.partner.id}
+            reactions={reactions.data ?? []}
+            userId={me.userId}
+            names={names}
+          />
+        )}
       </Box>
     );
   }
@@ -144,11 +161,25 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
           {date.my_score != null ? (
             <>
               <Score score={date.my_score} comment={date.my_comment} />
+              {/* reações do par à sua nota (só aparecem depois da revelação) */}
+              {date.partner_score != null && (
+                <ReactionBar
+                  dateId={date.id}
+                  kind="rating"
+                  targetRef={me.userId}
+                  reactions={reactions.data ?? []}
+                  userId={me.userId}
+                  names={names}
+                  canAdd={false}
+                />
+              )}
               {!editing && (
                 <button
                   onClick={() => {
                     setScore(date.my_score);
                     setComment(date.my_comment ?? "");
+                    setCriteria(date.my_criteria ?? {});
+                    setShowCriteria(hasCriteria(date.my_criteria));
                     setEditing(true);
                   }}
                   className="mt-auto flex items-center gap-1 self-start pt-2 text-[13px] font-semibold text-wine"
@@ -211,6 +242,20 @@ export function RatingPanel({ date, me }: { date: DateItem; me: Me }) {
             maxLength={500}
             placeholder="Um comentário curto (opcional)"
           />
+          <button
+            type="button"
+            onClick={() => setShowCriteria((v) => !v)}
+            aria-expanded={showCriteria}
+            className="mt-3 flex w-full items-center justify-between rounded-xl px-1 py-2 text-sm font-medium text-wine"
+          >
+            Avaliar por critério (opcional)
+            <ChevronDown className={`size-4 transition-transform ${showCriteria ? "rotate-180" : ""}`} aria-hidden />
+          </button>
+          {showCriteria && (
+            <div className="animate-slide-down pb-1 pt-1">
+              <CriteriaInput value={criteria} onChange={setCriteria} />
+            </div>
+          )}
           <div className="mt-3 flex gap-2">
             {editing && (
               <Button variant="secondary" className="flex-1" onClick={() => setEditing(false)}>

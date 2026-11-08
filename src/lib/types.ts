@@ -10,6 +10,7 @@ export type Couple = {
   id: string;
   name: string | null;
   invite_code: string;
+  monthly_budget: number | null;
 };
 
 export type Me = {
@@ -19,6 +20,9 @@ export type Me = {
   partner: Profile | null;
   couple: Couple | null;
 };
+
+/** Notas opcionais por critério (1–10). */
+export type Criteria = Partial<Record<"food" | "ambience" | "price" | "vibe", number>>;
 
 /** Linha devolvida pela RPC get_dates (já com as notas filtradas). */
 export type DateItem = {
@@ -32,12 +36,19 @@ export type DateItem = {
   cover_path: string | null;
   favorite: boolean;
   created_at: string;
+  quote: string | null;
+  tags: string[];
+  lat: number | null;
+  lng: number | null;
   my_score: number | null;
   my_comment: string | null;
+  my_criteria: Criteria | null;
   partner_rated: boolean;
   partner_score: number | null;
   partner_comment: string | null;
+  partner_criteria: Criteria | null;
   couple_avg: number | null;
+  comments_count: number;
 };
 
 export type DatePhoto = {
@@ -50,10 +61,52 @@ export type DatePhoto = {
 export type WishItem = {
   id: string;
   place_name: string;
+  place_address: string | null;
+  lat: number | null;
+  lng: number | null;
   notes: string | null;
   added_by: string;
   done_date_id: string | null;
   created_at: string;
+};
+
+export type Plan = {
+  id: string;
+  created_by: string;
+  place_name: string;
+  place_address: string | null;
+  lat: number | null;
+  lng: number | null;
+  scheduled_at: string;
+  notes: string | null;
+  wish_id: string | null;
+  done_date_id: string | null;
+};
+
+export type Comment = {
+  id: string;
+  date_id: string;
+  user_id: string;
+  body: string;
+  created_at: string;
+};
+
+export type Reaction = {
+  id: string;
+  date_id: string;
+  target_kind: "rating" | "comment";
+  target_ref: string;
+  user_id: string;
+  emoji: string;
+};
+
+/** Lugar escolhido na busca (OpenStreetMap). */
+export type PlacePick = {
+  name: string;
+  address: string | null;
+  lat: number;
+  lng: number;
+  category?: Category;
 };
 
 export type DateInput = {
@@ -62,4 +115,8 @@ export type DateInput = {
   date_on: string;
   category: Category;
   cost: number | null;
+  quote: string | null;
+  tags: string[];
+  lat: number | null;
+  lng: number | null;
 };

@@ -8,7 +8,7 @@ import { useToast } from "@/components/toast";
 import { Button, ErrorState, FullScreenLoader, PageHeader } from "@/components/ui";
 import { deleteDate, updateDate } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
-import { useCurrentMe, useDate, useInvalidateDates, usePhotos, useSignedUrls } from "@/lib/hooks";
+import { useCurrentMe, useDate, useDates, useInvalidateDates, usePhotos, useSignedUrls } from "@/lib/hooks";
 
 export default function EditDatePage() {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +18,7 @@ export default function EditDatePage() {
   const invalidate = useInvalidateDates();
   const date = useDate(id);
   const photos = usePhotos(id);
+  const allDates = useDates();
   const urls = useSignedUrls([date.data?.cover_path, ...(photos.data?.map((p) => p.path) ?? [])]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -48,6 +49,7 @@ export default function EditDatePage() {
         newCover: r.newCover,
         newExtras: r.newExtras,
         removedPhotos: r.removedPhotos,
+        coverFromPhoto: r.coverFromPhoto,
         nextPosition: Math.max(-1, ...photos.data!.map((p) => p.position)) + 1,
         onProgress: (done, total) => setProgress(`Enviando fotos ${done}/${total}…`),
       });
@@ -92,6 +94,7 @@ export default function EditDatePage() {
           hasExistingCover={!!d.cover_path}
           existingPhotos={photos.data}
           photoUrls={urls.data}
+          tagSuggestions={[...new Set(allDates.data?.flatMap((x) => x.tags) ?? [])]}
           submitLabel="Salvar alterações"
           saving={saving}
           progress={progress}

@@ -6,7 +6,7 @@ import { AppError, toAppError } from "./errors";
 import { uuid } from "./format";
 import { compressImage } from "./images";
 import { BUCKET, supabase } from "./supabase";
-import type { Couple, DateInput, DateItem, DatePhoto, Me, Profile, WishItem } from "./types";
+import type { Comment, Couple, Criteria, DateInput, DateItem, DatePhoto, Me, Plan, Profile, Reaction, WishItem } from "./types";
 
 type Res = { data?: unknown; error: unknown };
 
@@ -27,6 +27,14 @@ function normalizeDate(row: DateItem): DateItem {
     ...row,
     cost: row.cost == null ? null : Number(row.cost),
     couple_avg: row.couple_avg == null ? null : Number(row.couple_avg),
+    // colunas novas: valores padrão caso a migration 0005 ainda não tenha rodado
+    quote: row.quote ?? null,
+    tags: row.tags ?? [],
+    lat: row.lat ?? null,
+    lng: row.lng ?? null,
+    my_criteria: row.my_criteria ?? null,
+    partner_criteria: row.partner_criteria ?? null,
+    comments_count: row.comments_count ?? 0,
   };
 }
 
@@ -42,6 +50,17 @@ export async function signUp(name: string, email: string, password: string): Pro
     supabase().auth.signUp({ email, password, options: { data: { display_name: name } } }),
   );
   return !!data.session;
+}
+
+/** Manda o e-mail com o link para criar uma senha nova. */
+export async function requestPasswordReset(email: string) {
+  await run(() =>
+    supabase().auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset` }),
+  );
+}
+
+export async function updatePassword(password: string) {
+  await run(() => supabase().auth.updateUser({ password }));
 }
 
 export async function signOut() {
@@ -70,12 +89,17 @@ export async function fetchMe(userId: string, email: string): Promise<Me> {
     couple = await run(() =>
       supabase()
         .from("couples")
-        .select("id, name, invite_code")
+        .select("*")
         .eq("id", profile.couple_id!)
         .single(),
     );
   }
+  if (couple) couple = { ...couple, monthly_budget: couple.monthly_budget == null ? null : Number(couple.monthly_budget) };
   return { userId, email, profile, partner, couple };
+}
+
+export async function setBudget(coupleId: string, value: number | null) {
+  await run(() => supabase().from("couples").update({ monthly_budget: value }).eq("id", coupleId));
 }
 
 export async function updateDisplayName(userId: string, name: string) {
@@ -189,9 +213,10 @@ export async function createDate(args: {
   cover: File;
   extras: File[];
   wishId?: string | null;
+  planId?: string | null;
   onProgress?: SaveProgress;
 }): Promise<string> {
-  const { coupleId, input, cover, extras, wishId, onProgress } = args;
+  const { coupleId, input, cover, extras, wishId, planId, onProgress } = args;
   const id = uuid();
   const [coverPath, ...extraPaths] = await uploadAll(coupleId, id, [cover, ...extras], onProgress);
 
@@ -216,6 +241,9 @@ export async function createDate(args: {
   if (wishId) {
     await run(() => supabase().from("wishlist").update({ done_date_id: id }).eq("id", wishId));
   }
+  if (planId) {
+    await run(() => supabase().from("plans").update({ done_date_id: id }).eq("id", planId));
+  }
   return id;
 }
 
@@ -227,13 +255,17 @@ export async function updateDate(args: {
   newCover: File | null;
   newExtras: File[];
   removedPhotos: DatePhoto[];
+  /** foto extra que vira capa (a capa antiga vai para o lugar dela) */
+  coverFromPhoto?: DatePhoto | null;
   nextPosition: number;
   onProgress?: SaveProgress;
 }) {
-  const { coupleId, id, input, oldCoverPath, newCover, newExtras, removedPhotos, nextPosition, onProgress } = args;
+  const { coupleId, id, input, oldCoverPath, newCover, newExtras, removedPhotos, coverFromPhoto, nextPosition, onProgress } =
+    args;
   const files = newCover ? [newCover, ...newExtras] : newExtras;
   const uploaded = await uploadAll(coupleId, id, files, onProgress);
-  const coverPath = newCover ? uploaded[0] : oldCoverPath;
+  const swap = !newCover && coverFromPhoto && oldCoverPath ? coverFromPhoto : null;
+  const coverPath = newCover ? uploaded[0] : swap ? swap.path : oldCoverPath;
   const extraPaths = newCover ? uploaded.slice(1) : uploaded;
 
   try {
@@ -245,6 +277,10 @@ export async function updateDate(args: {
     throw e;
   }
 
+  if (swap && oldCoverPath) {
+    // a capa antiga ocupa a posição da foto que virou capa
+    await run(() => supabase().from("date_photos").update({ path: oldCoverPath }).eq("id", swap.id));
+  }
   if (extraPaths.length) {
     await run(() =>
       supabase()
@@ -278,15 +314,96 @@ export async function setFavorite(id: string, favorite: boolean) {
   await run(() => supabase().from("dates").update({ favorite }).eq("id", id));
 }
 
-export async function saveRating(dateId: string, userId: string, score: number, comment: string | null) {
+export async function saveRating(
+  dateId: string,
+  userId: string,
+  score: number,
+  comment: string | null,
+  criteria: Criteria = {},
+) {
+  const c = {
+    food: criteria.food ?? null,
+    ambience: criteria.ambience ?? null,
+    price: criteria.price ?? null,
+    vibe: criteria.vibe ?? null,
+  };
   await run(() =>
     supabase()
       .from("ratings")
-      .upsert(
-        { date_id: dateId, user_id: userId, score, comment },
-        { onConflict: "date_id,user_id" },
-      ),
+      .upsert({ date_id: dateId, user_id: userId, score, comment, ...c }, { onConflict: "date_id,user_id" }),
   );
+}
+
+/** Guarda as coordenadas encontradas para o mapa. */
+export async function saveCoords(dateId: string, lat: number, lng: number) {
+  await run(() => supabase().from("dates").update({ lat, lng }).eq("id", dateId));
+}
+
+/* ------------------------------------------------- comentários e reações */
+
+export async function listComments(dateId: string): Promise<Comment[]> {
+  return run(() =>
+    supabase()
+      .from("date_comments")
+      .select("id, date_id, user_id, body, created_at")
+      .eq("date_id", dateId)
+      .order("created_at"),
+  );
+}
+
+export async function addComment(dateId: string, body: string): Promise<string> {
+  const row: { id: string } = await run(() =>
+    supabase().from("date_comments").insert({ date_id: dateId, body }).select("id").single(),
+  );
+  return row.id;
+}
+
+export async function deleteComment(id: string) {
+  await run(() => supabase().from("date_comments").delete().eq("id", id));
+}
+
+export async function listReactions(dateId: string): Promise<Reaction[]> {
+  return run(() =>
+    supabase()
+      .from("reactions")
+      .select("id, date_id, target_kind, target_ref, user_id, emoji")
+      .eq("date_id", dateId),
+  );
+}
+
+export async function addReaction(r: Pick<Reaction, "date_id" | "target_kind" | "target_ref" | "emoji">) {
+  await run(() => supabase().from("reactions").insert(r));
+}
+
+export async function removeReaction(id: string) {
+  await run(() => supabase().from("reactions").delete().eq("id", id));
+}
+
+/* ------------------------------------------------------------ planos */
+
+const PLAN_COLUMNS = "id, created_by, place_name, place_address, lat, lng, scheduled_at, notes, wish_id, done_date_id";
+
+export async function listPlans(): Promise<Plan[]> {
+  return run(() => supabase().from("plans").select(PLAN_COLUMNS).order("scheduled_at"));
+}
+
+export async function getPlan(id: string): Promise<Plan | null> {
+  const rows: Plan[] = await run(() => supabase().from("plans").select(PLAN_COLUMNS).eq("id", id));
+  return rows[0] ?? null;
+}
+
+export async function addPlan(
+  coupleId: string,
+  p: Pick<Plan, "place_name" | "place_address" | "lat" | "lng" | "scheduled_at" | "notes" | "wish_id">,
+): Promise<string> {
+  const row: { id: string } = await run(() =>
+    supabase().from("plans").insert({ couple_id: coupleId, ...p }).select("id").single(),
+  );
+  return row.id;
+}
+
+export async function deletePlan(id: string) {
+  await run(() => supabase().from("plans").delete().eq("id", id));
 }
 
 /* ---------------------------------------------------------- wishlist */
@@ -295,14 +412,20 @@ export async function listWishlist(): Promise<WishItem[]> {
   return run(() =>
     supabase()
       .from("wishlist")
-      .select("id, place_name, notes, added_by, done_date_id, created_at")
+      .select("*")
       .order("created_at", { ascending: false }),
   );
 }
 
-export async function addWish(coupleId: string, place_name: string, notes: string | null): Promise<string> {
+export async function addWish(
+  coupleId: string,
+  place_name: string,
+  notes: string | null,
+  place?: { address: string | null; lat: number; lng: number } | null,
+): Promise<string> {
+  const extra = place ? { place_address: place.address, lat: place.lat, lng: place.lng } : {};
   const row: { id: string } = await run(() =>
-    supabase().from("wishlist").insert({ couple_id: coupleId, place_name, notes }).select("id").single(),
+    supabase().from("wishlist").insert({ couple_id: coupleId, place_name, notes, ...extra }).select("id").single(),
   );
   return row.id;
 }

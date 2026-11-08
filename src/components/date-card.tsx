@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart } from "lucide-react";
+import { Heart, MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { categoryInfo } from "@/lib/categories";
@@ -94,11 +94,17 @@ export function DateCard({
 
       <div className="absolute inset-x-0 bottom-0 p-5 text-white">
         <h2 className="mb-2 font-serif text-[32px] leading-[1.05]">{date.place_name}</h2>
+        {date.quote && <p className="mb-2.5 line-clamp-2 font-serif text-[17px] italic leading-snug text-white/90">“{date.quote}”</p>}
         <div className="flex flex-wrap items-center gap-2.5 text-[13px] opacity-95">
           <span>{formatDate(date.date_on)}</span>
           <span className="rounded-full bg-white/18 px-2.5 py-1 backdrop-blur-sm">
             {categoryInfo(date.category).label}
           </span>
+          {date.comments_count > 0 && (
+            <span className="flex items-center gap-1 rounded-full bg-white/18 px-2.5 py-1 backdrop-blur-sm">
+              <MessageCircle className="size-3.5" aria-hidden /> {date.comments_count}
+            </span>
+          )}
         </div>
       </div>
     </article>

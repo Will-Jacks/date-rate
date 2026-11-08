@@ -1,12 +1,14 @@
 "use client";
 
-import { ImagePlus, X } from "lucide-react";
+import { ImagePlus, Star, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { CATEGORIES, type Category } from "@/lib/categories";
 import { todayISO } from "@/lib/format";
 import type { DateInput, DatePhoto } from "@/lib/types";
-import { Button, Field, Input } from "./ui";
+import { PlaceSearch } from "./place-search";
+import { TagInput } from "./tag-input";
+import { Button, Field, Input, TextArea } from "./ui";
 
 const MAX_EXTRAS = 8;
 
@@ -25,6 +27,7 @@ const schema = z.object({
       return Number(n.includes(",") ? n.replace(/\./g, "").replace(",", ".") : n);
     })
     .refine((v) => v == null || (Number.isFinite(v) && v >= 0 && v < 1e8), "Valor inválido."),
+  quote: z.string().trim().max(200, "Frase longa demais (máx. 200).").transform((v) => v || null),
 });
 
 export type DateFormResult = {
@@ -32,6 +35,7 @@ export type DateFormResult = {
   newCover: File | null;
   newExtras: File[];
   removedPhotos: DatePhoto[];
+  coverFromPhoto: DatePhoto | null;
 };
 
 /** URL local para pré-visualizar um arquivo, liberada ao desmontar. */
@@ -47,6 +51,8 @@ export function DateForm({
   hasExistingCover = false,
   existingPhotos = [],
   photoUrls = {},
+  tagSuggestions = [],
+  near,
   submitLabel,
   saving,
   progress,
@@ -57,6 +63,8 @@ export function DateForm({
   hasExistingCover?: boolean;
   existingPhotos?: DatePhoto[];
   photoUrls?: Record<string, string>;
+  tagSuggestions?: string[];
+  near?: { lat: number; lng: number } | null;
   submitLabel: string;
   saving: boolean;
   progress: string | null;
@@ -70,6 +78,12 @@ export function DateForm({
   const [cover, setCover] = useState<File[]>([]);
   const [extras, setExtras] = useState<File[]>([]);
   const [removed, setRemoved] = useState<DatePhoto[]>([]);
+  const [coverFromPhoto, setCoverFromPhoto] = useState<DatePhoto | null>(null);
+  const [quote, setQuote] = useState(initial?.quote ?? "");
+  const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+    initial?.lat != null && initial?.lng != null ? { lat: initial.lat, lng: initial.lng } : null,
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const coverInput = useRef<HTMLInputElement>(null);
@@ -79,12 +93,12 @@ export function DateForm({
 
   const keptPhotos = existingPhotos.filter((p) => !removed.some((r) => r.id === p.id));
   const slotsLeft = MAX_EXTRAS - keptPhotos.length - extras.length;
-  const coverUrl = coverPreview ?? existingCoverUrl;
+  const coverUrl = coverPreview ?? (coverFromPhoto ? photoUrls[coverFromPhoto.path] : existingCoverUrl);
   const hasCover = cover.length > 0 || hasExistingCover;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    const parsed = schema.safeParse({ place_name: placeName, place_address: address, date_on: dateOn, category, cost });
+    const parsed = schema.safeParse({ place_name: placeName, place_address: address, date_on: dateOn, category, cost, quote });
     const errs: Record<string, string> = {};
     if (!parsed.success) {
       for (const issue of parsed.error.issues) errs[String(issue.path[0])] ??= issue.message;
@@ -93,10 +107,11 @@ export function DateForm({
     setErrors(errs);
     if (!parsed.success || Object.keys(errs).length) return;
     onSubmit({
-      input: parsed.data,
+      input: { ...parsed.data, tags, lat: coords?.lat ?? null, lng: coords?.lng ?? null },
       newCover: cover[0] ?? null,
       newExtras: extras,
       removedPhotos: removed,
+      coverFromPhoto: cover.length ? null : coverFromPhoto,
     });
   }
 
@@ -133,23 +148,39 @@ export function DateForm({
           hidden
           onChange={(e) => {
             const f = e.target.files?.[0];
-            if (f) setCover([f]);
+            if (f) {
+              setCover([f]);
+              setCoverFromPhoto(null);
+            }
             e.target.value = "";
           }}
         />
         {errors.cover && <p className="mt-1.5 text-sm text-wine">{errors.cover}</p>}
       </div>
 
-      <Field label="Onde foi?">
-        <Input
+      <div className="flex flex-col gap-1.5">
+        <span className="text-sm font-medium">Onde foi?</span>
+        <PlaceSearch
           value={placeName}
-          onChange={(e) => setPlaceName(e.target.value)}
-          placeholder="Ex.: Mangai"
-          maxLength={120}
-          aria-invalid={!!errors.place_name}
+          near={coords ?? near}
+          invalid={!!errors.place_name}
+          onChange={(v) => {
+            setPlaceName(v);
+            setCoords(null); // nome digitado à mão: coordenadas antigas deixam de valer
+          }}
+          onPick={(p) => {
+            setPlaceName(p.name);
+            if (p.address) setAddress(p.address);
+            setCoords({ lat: p.lat, lng: p.lng });
+            if (p.category) setCategory(p.category);
+          }}
         />
-        {errors.place_name && <span className="text-sm text-wine">{errors.place_name}</span>}
-      </Field>
+        {errors.place_name ? (
+          <span className="text-sm text-wine">{errors.place_name}</span>
+        ) : (
+          <span className="text-xs text-muted">{coords ? "📍 Localização encontrada — vai aparecer no mapa." : "Digite e escolha uma sugestão para preencher o endereço."}</span>
+        )}
+      </div>
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="Quando?">
@@ -190,12 +221,35 @@ export function DateForm({
         <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Rua, bairro, cidade" maxLength={300} />
       </Field>
 
+      <Field label="Frase do date" hint="Opcional. Uma frase marcante, uma piada interna…">
+        <TextArea value={quote} onChange={(e) => setQuote(e.target.value)} maxLength={200} placeholder="“Nunca mais peço o prato do dia”" className="min-h-16" />
+        {errors.quote && <span className="text-sm text-wine">{errors.quote}</span>}
+      </Field>
+
+      <div className="flex flex-col gap-1.5">
+        <span className="text-sm font-medium">Etiquetas</span>
+        <TagInput value={tags} onChange={setTags} suggestions={tagSuggestions} />
+      </div>
+
       {/* Fotos extras */}
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Mais fotos</span>
         <div className="grid grid-cols-4 gap-2">
           {keptPhotos.map((p) => (
-            <Thumb key={p.id} src={photoUrls[p.path]} onRemove={() => setRemoved((r) => [...r, p])} />
+            <Thumb
+              key={p.id}
+              src={photoUrls[p.path]}
+              isCover={coverFromPhoto?.id === p.id}
+              onMakeCover={
+                hasExistingCover && !cover.length
+                  ? () => setCoverFromPhoto((c) => (c?.id === p.id ? null : p))
+                  : undefined
+              }
+              onRemove={() => {
+                setRemoved((r) => [...r, p]);
+                if (coverFromPhoto?.id === p.id) setCoverFromPhoto(null);
+              }}
+            />
           ))}
           {extraPreviews.map((src, i) => (
             <Thumb key={src} src={src} onRemove={() => setExtras((x) => x.filter((_, j) => j !== i))} />
@@ -223,7 +277,9 @@ export function DateForm({
             e.target.value = "";
           }}
         />
-        <span className="text-xs text-muted">Até {MAX_EXTRAS} fotos além da capa.</span>
+        <span className="text-xs text-muted">
+          Até {MAX_EXTRAS} fotos além da capa.{keptPhotos.length > 0 && hasExistingCover ? " Toque na ★ para usar uma delas como capa." : ""}
+        </span>
       </div>
 
       {/* botão fixo no rodapé: sempre à mão, sem rolar até o fim */}
@@ -236,10 +292,31 @@ export function DateForm({
   );
 }
 
-function Thumb({ src, onRemove }: { src?: string; onRemove: () => void }) {
+function Thumb({
+  src,
+  onRemove,
+  onMakeCover,
+  isCover,
+}: {
+  src?: string;
+  onRemove: () => void;
+  onMakeCover?: () => void;
+  isCover?: boolean;
+}) {
   return (
-    <div className="relative aspect-square overflow-hidden rounded-xl bg-line">
+    <div className={`relative aspect-square overflow-hidden rounded-xl bg-line ${isCover ? "ring-3 ring-wine" : ""}`}>
       {src && <img src={src} alt="" className="size-full object-cover" />}
+      {onMakeCover && (
+        <button
+          type="button"
+          onClick={onMakeCover}
+          aria-label={isCover ? "Desfazer: não usar como capa" : "Usar como capa"}
+          aria-pressed={isCover}
+          className={`absolute left-1 top-1 grid size-7 place-items-center rounded-full ${isCover ? "bg-wine text-white" : "bg-black/60 text-white"}`}
+        >
+          <Star className={`size-3.5 ${isCover ? "fill-current" : ""}`} aria-hidden />
+        </button>
+      )}
       <button
         type="button"
         onClick={onRemove}

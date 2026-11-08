@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useSession } from "@/components/auth-provider";
 import { BottomNav } from "@/components/bottom-nav";
+import { OfflineBanner } from "@/components/offline-banner";
 import { ErrorState, FullScreenLoader } from "@/components/ui";
 import { useMe } from "@/lib/hooks";
 import { syncPush } from "@/lib/push";
@@ -36,6 +37,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
 
   return (
     <div className={`mx-auto min-h-dvh max-w-[480px] ${isForm ? "" : "pb-28"}`}>
+      <OfflineBanner />
       <div key={path} className={isDetail ? "animate-page-up" : "animate-page-fade"}>
         {children}
       </div>

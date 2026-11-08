@@ -84,6 +84,30 @@ export function useRealtime(me: Me | undefined) {
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles", filter: `couple_id=eq.${coupleId}` }, () =>
         qc.invalidateQueries({ queryKey: ["me"] }),
       )
+      .on("postgres_changes", { event: "*", schema: "public", table: "couples", filter: `id=eq.${coupleId}` }, () =>
+        qc.invalidateQueries({ queryKey: ["me"] }),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "plans", filter: `couple_id=eq.${coupleId}` }, () =>
+        qc.invalidateQueries({ queryKey: ["plans"] }),
+      )
+      // comentários e reações: o RLS só entrega os do próprio casal
+      .on("postgres_changes", { event: "*", schema: "public", table: "date_comments" }, (e) => {
+        const dateId = ((e.new as { date_id?: string })?.date_id ?? (e.old as { date_id?: string })?.date_id) as string | undefined;
+        if (dateId) qc.invalidateQueries({ queryKey: ["comments", dateId] });
+        else qc.invalidateQueries({ queryKey: ["comments"] });
+        qc.invalidateQueries({ queryKey: keys.dates });
+        const row = e.new as { user_id?: string; body?: string };
+        const current = meRef.current;
+        if (e.eventType === "INSERT" && dateId && current && row.user_id && row.user_id !== current.userId) {
+          const place = qc.getQueryData<DateItem[]>(keys.dates)?.find((d) => d.id === dateId)?.place_name;
+          const name = current.partner?.display_name ?? "Seu par";
+          toast(`💬 ${name} comentou${place ? ` em ${place}` : ""}: ${String(row.body ?? "").slice(0, 60)}`, "news", `/dates/${dateId}#conversa`);
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "reactions" }, (e) => {
+        const dateId = (e.new as { date_id?: string })?.date_id;
+        qc.invalidateQueries({ queryKey: dateId ? ["reactions", dateId] : ["reactions"] });
+      })
       .subscribe();
 
     return () => {

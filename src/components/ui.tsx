@@ -145,7 +145,17 @@ export function DetailSkeleton() {
 }
 
 /** Círculo com as iniciais do nome. */
-export function Avatar({ name, tone = "wine", className = "" }: { name: string; tone?: "wine" | "coral"; className?: string }) {
+export function Avatar({
+  name,
+  tone = "wine",
+  big = false,
+  className = "",
+}: {
+  name: string;
+  tone?: "wine" | "coral";
+  big?: boolean;
+  className?: string;
+}) {
   const initials = name
     .trim()
     .split(/\s+/)
@@ -154,7 +164,7 @@ export function Avatar({ name, tone = "wine", className = "" }: { name: string; 
     .join("");
   return (
     <span
-      className={`grid size-7 shrink-0 place-items-center rounded-full text-[11px] font-bold text-white ${
+      className={`grid shrink-0 place-items-center rounded-full font-bold text-white ${big ? "size-11 text-sm" : "size-7 text-[11px]"} ${
         tone === "wine" ? "bg-wine" : "bg-coral"
       } ${className}`}
       aria-hidden

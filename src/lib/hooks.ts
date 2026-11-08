@@ -101,3 +101,15 @@ export function useToggleFavorite() {
     },
   });
 }
+
+export function useComments(dateId: string) {
+  return useQuery({ queryKey: ["comments", dateId], queryFn: () => api.listComments(dateId) });
+}
+
+export function useReactions(dateId: string) {
+  return useQuery({ queryKey: ["reactions", dateId], queryFn: () => api.listReactions(dateId) });
+}
+
+export function usePlans() {
+  return useQuery({ queryKey: ["plans"], queryFn: api.listPlans });
+}

@@ -4,7 +4,10 @@ import { ArrowLeft, Heart, Images, MapPin, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
+import { Conversation } from "@/components/conversation";
 import { Cover } from "@/components/cover";
+import { CriteriaRadar, hasCriteria } from "@/components/criteria";
+import { Revisits, ShareButton } from "@/components/date-extras";
 import { Gallery } from "@/components/gallery";
 import { RatingPanel } from "@/components/rating-panel";
 import { useToast } from "@/components/toast";
@@ -12,7 +15,7 @@ import { DetailSkeleton, ErrorState } from "@/components/ui";
 import { categoryInfo } from "@/lib/categories";
 import { errorMessage } from "@/lib/errors";
 import { formatCost, formatDate } from "@/lib/format";
-import { useCurrentMe, useDate, usePhotos, useSignedUrls, useToggleFavorite } from "@/lib/hooks";
+import { useCurrentMe, useDate, useDates, usePhotos, useSignedUrls, useToggleFavorite } from "@/lib/hooks";
 
 // botões de vidro escuro: legíveis sobre qualquer foto, no tema claro ou escuro
 const roundBtn =
@@ -24,6 +27,7 @@ export default function DatePage() {
   const me = useCurrentMe();
   const date = useDate(id);
   const photos = usePhotos(id);
+  const all = useDates();
   const urls = useSignedUrls([date.data?.cover_path, ...(photos.data?.map((p) => p.path) ?? [])]);
   const favorite = useToggleFavorite();
   const toast = useToast();
@@ -104,7 +108,32 @@ export default function DatePage() {
           </a>
         )}
 
+        {d.quote && (
+          <blockquote className="mb-5 border-l-4 border-coral pl-4 font-serif text-xl italic leading-snug">“{d.quote}”</blockquote>
+        )}
+        {d.tags.length > 0 && (
+          <div className="mb-5 flex flex-wrap gap-1.5">
+            {d.tags.map((t) => (
+              <Link key={t} href={`/?tag=${encodeURIComponent(t)}`} className="rounded-full bg-wine/10 px-2.5 py-1 text-sm font-medium text-wine">
+                #{t}
+              </Link>
+            ))}
+          </div>
+        )}
+
         <RatingPanel key={d.id} date={d} me={me} />
+
+        {(hasCriteria(d.my_criteria) || hasCriteria(d.partner_criteria)) && (
+          <section className="mt-6 rounded-2xl border border-line bg-card p-4">
+            <h2 className="mb-2 font-serif text-lg">Por critério</h2>
+            <CriteriaRadar
+              mine={d.my_criteria}
+              partner={d.partner_criteria}
+              myName="Você"
+              partnerName={me.partner?.display_name ?? "Seu par"}
+            />
+          </section>
+        )}
 
         {!!photos.data?.length && (
           <section className="mt-8">
@@ -126,6 +155,13 @@ export default function DatePage() {
             </div>
           </section>
         )}
+        <Conversation dateId={d.id} me={me} />
+
+        {all.data && <Revisits date={d} all={all.data} />}
+
+        <div className="mt-8">
+          <ShareButton date={d} coverUrl={d.cover_path ? urls.data?.[d.cover_path] : undefined} me={me} />
+        </div>
       </div>
 
       {viewer != null && <Gallery urls={galleryUrls} start={viewer} onClose={() => setViewer(null)} />}

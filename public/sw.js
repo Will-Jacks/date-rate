@@ -89,7 +89,8 @@ self.addEventListener("fetch", (event) => {
         const cache = await caches.open(IMAGES);
         const hit = await cache.match(key);
         if (hit) return hit;
-        const res = await fetch(req);
+        // sempre em modo CORS: a mesma resposta serve para <img> e para o canvas do card de compartilhar
+        const res = await fetch(req.url, { mode: "cors", credentials: "omit" });
         if (res.ok) {
           await cache.put(key, res.clone());
           trimImages();
