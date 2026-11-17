@@ -118,6 +118,21 @@ export function EmptyState({
 }
 
 /** Cards cinza no formato do feed enquanto carrega. */
+export function FeedSkeleton() {
+  return (
+    <div className="flex flex-col gap-[18px] px-4 pt-1" aria-label="Carregando" role="status">
+      {[0, 1].map((i) => (
+        <div key={i} className="skeleton relative aspect-[4/5] overflow-hidden rounded-2xl">
+          <div className="absolute bottom-5 left-5 flex flex-col gap-2.5">
+            <div className="h-8 w-48 rounded-lg bg-card/50" />
+            <div className="h-4 w-28 rounded-md bg-card/50" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function DetailSkeleton() {
   return (
     <div role="status" aria-label="Carregando">

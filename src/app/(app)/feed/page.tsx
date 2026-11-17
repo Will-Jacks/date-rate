@@ -59,7 +59,7 @@ function Posts() {
     return () => cancelAnimationFrame(raf);
   }, [from, list.length]);
 
-  const back = () => (window.history.length > 1 ? router.back() : router.replace(`/${feedSearch(p)}`));
+  const back = () => (window.history.length > 1 ? router.back() : router.replace(`/album${feedSearch(p)}`));
 
   return (
     <div>
@@ -200,7 +200,7 @@ function Post({ date: d, me, coverUrl }: { date: DateItem; me: Me; coverUrl?: st
         {d.tags.length > 0 && (
           <p className="mt-1 flex flex-wrap gap-x-2">
             {d.tags.map((t) => (
-              <Link key={t} href={`/?tag=${encodeURIComponent(t)}`} className="font-medium text-wine">
+              <Link key={t} href={`/album?tag=${encodeURIComponent(t)}`} className="font-medium text-wine">
                 #{t}
               </Link>
             ))}
