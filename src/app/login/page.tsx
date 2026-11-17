@@ -63,7 +63,7 @@ export default function LoginPage() {
               />
             </svg>
           </div>
-          <h1 className="font-serif text-5xl leading-none">Date Rate</h1>
+          <h1 className="font-serif text-5xl leading-none">Memória de Peixe</h1>
           <p className="mt-3 text-white/85">O diário dos nossos dates. Cada um dá sua nota — e a do outro só aparece depois.</p>
         </div>
       </section>

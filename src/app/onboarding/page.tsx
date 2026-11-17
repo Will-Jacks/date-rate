@@ -81,7 +81,7 @@ export default function OnboardingPage() {
     <main className="mx-auto flex min-h-dvh max-w-[420px] flex-col justify-center gap-8 px-6 py-10">
       <div>
         <h1 className="font-serif text-4xl text-wine">Oi, {me.data?.profile.display_name}!</h1>
-        <p className="mt-2 text-muted">O Date Rate é um diário a dois. Como vocês querem começar?</p>
+        <p className="mt-2 text-muted">O Memória de Peixe é um diário a dois. Como vocês querem começar?</p>
       </div>
 
       <section className="rounded-2xl border border-line bg-card p-5">

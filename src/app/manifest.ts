@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Date Rate",
-    short_name: "Date Rate",
+    name: "Memória de Peixe",
+    short_name: "Memória de Peixe",
     description: "O diário dos nossos dates",
     start_url: "/",
     display: "standalone",

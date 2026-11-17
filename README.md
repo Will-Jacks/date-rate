@@ -1,4 +1,4 @@
-# Date Rate
+# Memória de Peixe
 
 Diário de dates a dois. Cada date vira um card com foto de capa, e cada pessoa
 dá uma nota de **1 a 10**. A nota do outro só aparece depois que você avalia.

@@ -57,7 +57,7 @@ export function buildMessage(m: MessageInput): PushPayload {
         tag: `followup-${m.planId}`,
       };
     case "test":
-      return { title: "🔔 Notificações ativadas!", body: "Tudo certo: você vai receber os avisos do Date Rate aqui.", url: "/profile" };
+      return { title: "🔔 Notificações ativadas!", body: "Tudo certo: você vai receber os avisos do Memória de Peixe aqui.", url: "/profile" };
   }
 }
 

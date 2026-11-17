@@ -1,4 +1,4 @@
-/* Date Rate — service worker
+/* Memória de Peixe — service worker
  * 1. Notificações push (inclusive com o app fechado)
  * 2. Modo offline básico: telas e fotos já vistas continuam abrindo sem internet
  */
@@ -35,7 +35,7 @@ self.addEventListener("push", (event) => {
   } catch {
     data = { body: event.data ? event.data.text() : "" };
   }
-  const title = data.title || "Date Rate";
+  const title = data.title || "Memória de Peixe";
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || "",

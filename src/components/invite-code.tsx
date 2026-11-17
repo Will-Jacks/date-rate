@@ -5,7 +5,7 @@ import { useState } from "react";
 
 export function InviteCode({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
-  const text = `Vamos avaliar nossos dates juntos? Entra no Date Rate e usa o código ${code}`;
+  const text = `Vamos avaliar nossos dates juntos? Entra no Memória de Peixe e usa o código ${code}`;
 
   async function share() {
     if (navigator.share) {

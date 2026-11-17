@@ -109,7 +109,7 @@ export async function renderShareCard(opts: {
   ctx.fillStyle = "#ffffff";
   ctx.font = `700 46px ${serif}`;
   ctx.textBaseline = "top";
-  ctx.fillText("♥ Date Rate", 80, 96);
+  ctx.fillText("♥ Memória de Peixe", 80, 96);
 
   const pad = 80;
   let y = H - 140;

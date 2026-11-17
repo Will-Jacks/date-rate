@@ -32,7 +32,7 @@ function InstallSteps() {
       </li>
       <li className="flex items-center gap-2">
         <span className="grid size-6 shrink-0 place-items-center rounded-full bg-wine text-xs font-bold text-white">3</span>
-        Abra o Date Rate pelo ícone novo e ative aqui
+        Abra o Memória de Peixe pelo ícone novo e ative aqui
       </li>
     </ol>
   );
@@ -83,7 +83,7 @@ export function PushSettings() {
       {state === "denied" && (
         <p className="mt-2 text-sm text-muted">
           {isIOS()
-            ? "Elas estão bloqueadas. Vá em Ajustes → Notificações → Date Rate e permita."
+            ? "Elas estão bloqueadas. Vá em Ajustes → Notificações → Memória de Peixe e permita."
             : "Elas estão bloqueadas. Toque no cadeado ao lado do endereço → Notificações → Permitir, e recarregue."}
         </p>
       )}

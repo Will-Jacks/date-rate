@@ -7,9 +7,9 @@ const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], wei
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Date Rate",
+  title: "Memória de Peixe",
   description: "O diário dos nossos dates",
-  appleWebApp: { capable: true, title: "Date Rate", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Memória de Peixe", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

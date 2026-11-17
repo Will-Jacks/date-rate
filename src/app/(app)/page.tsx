@@ -80,7 +80,7 @@ function Feed() {
   return (
     <>
       <PageHeader
-        title="Date Rate"
+        title="Memória de Peixe"
         right={
           <button
             onClick={() => setSearching((s) => !s)}
