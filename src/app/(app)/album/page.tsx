@@ -314,8 +314,24 @@ function Highlights({ dates, coverUrls }: { dates: DateItem[]; coverUrls: Record
   const plans = usePlans();
   const wishlist = useWishlist();
 
-  type H = { key: string; href: string; label: string; emoji?: string; img?: string; ring?: boolean };
+  type H = { key: string; href: string; label: string; emoji?: string; img?: string; ring?: boolean; fav?: boolean };
   const items: H[] = [];
+  // favoritos primeiro: um por lugar (o date mais recente daquele lugar)
+  const seen = new Set<string>();
+  for (const d of dates.filter((x) => x.favorite).sort((a, b) => b.date_on.localeCompare(a.date_on))) {
+    const place = normalizePlace(d.place_name);
+    if (seen.has(place)) continue;
+    seen.add(place);
+    items.push({
+      key: `f-${d.id}`,
+      href: `/feed?from=${d.id}`,
+      label: d.place_name,
+      img: d.cover_path ? coverUrls[d.cover_path] : undefined,
+      emoji: "♥",
+      ring: true,
+      fav: true,
+    });
+  }
   for (const pl of (plans.data ?? []).filter((x) => !x.done_date_id).slice(0, 3)) {
     const c = countdown(pl.scheduled_at);
     items.push({
@@ -351,13 +367,18 @@ function Highlights({ dates, coverUrls }: { dates: DateItem[]; coverUrls: Record
       {items.map((h) => (
         <Link key={h.key} href={h.href} className="flex w-16 shrink-0 flex-col items-center gap-1">
           <span
-            className={`grid size-16 place-items-center rounded-full p-[2.5px] ${
+            className={`relative grid size-16 place-items-center rounded-full p-[2.5px] ${
               h.ring ? "bg-gradient-to-tr from-[#f6b47a] via-[#e0796b] to-[#8c2f39]" : "bg-line"
             }`}
           >
             <span className="grid size-full place-items-center overflow-hidden rounded-full border-2 border-cream bg-card text-2xl">
               {h.img ? <img src={h.img} alt="" className="size-full object-cover" /> : <span aria-hidden>{h.emoji}</span>}
             </span>
+            {h.fav && (
+              <span className="absolute bottom-0 right-0 grid size-5 place-items-center rounded-full border-2 border-cream bg-coral text-white">
+                <Heart className="size-2.5 fill-current" aria-label="Favorito" />
+              </span>
+            )}
           </span>
           <span className="w-full truncate text-center text-[11px]">{h.label}</span>
         </Link>
