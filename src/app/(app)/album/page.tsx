@@ -30,7 +30,6 @@ function GridSkeleton() {
 
 /** Perfil do casal: foto, números, destaques e a grade de capas (estilo Instagram). */
 function Profile() {
-  const me = useCurrentMe();
   const router = useRouter();
   const params = useSearchParams();
   const fromUrl = readFeedParams(params);

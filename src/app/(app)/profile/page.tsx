@@ -9,7 +9,8 @@ import { InviteCode } from "@/components/invite-code";
 import { PushSettings } from "@/components/push-settings";
 import { useToast } from "@/components/toast";
 import { BudgetCard, Medals, StreakCard } from "@/components/us-widgets";
-import { Avatar, Button, Field, Input, PageHeader } from "@/components/ui";
+import { CouplePhoto } from "@/components/couple-photo";
+import { Button, Field, Input, PageHeader } from "@/components/ui";
 import { leaveCouple, signOut, updateDisplayName } from "@/lib/api";
 import { categoryInfo } from "@/lib/categories";
 import { errorMessage } from "@/lib/errors";
@@ -84,10 +85,7 @@ Você deixa de ver os dates deste diário e poderá entrar em outro com um novo 
       <PageHeader title="Nós" />
       <div className="flex flex-col gap-5 px-4">
         <div className="flex items-center gap-3">
-          <div className="flex -space-x-2">
-            <Avatar name={me.profile.display_name} big className="ring-2 ring-cream" />
-            {me.partner && <Avatar name={me.partner.display_name} tone="coral" big className="ring-2 ring-cream" />}
-          </div>
+          <CouplePhoto />
           <p className="font-serif text-xl leading-tight">
             {me.profile.display_name}
             {me.partner ? ` & ${me.partner.display_name}` : ""}

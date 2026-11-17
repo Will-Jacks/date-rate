@@ -8,7 +8,8 @@ import { coverPosition } from "@/components/cover";
 import { ShareButton } from "@/components/date-extras";
 import { scoreTone } from "@/components/rating-panel";
 import { useToast } from "@/components/toast";
-import { Avatar, ErrorState, Spinner } from "@/components/ui";
+import { CouplePhoto } from "@/components/couple-photo";
+import { ErrorState, Spinner } from "@/components/ui";
 import { categoryInfo } from "@/lib/categories";
 import { compareScores } from "@/lib/compare";
 import { errorMessage } from "@/lib/errors";
@@ -111,10 +112,7 @@ function Post({ date: d, me, coverUrl }: { date: DateItem; me: Me; coverUrl?: st
     <article ref={ref} id={`post-${d.id}`} className="border-b border-line pb-4 pt-3">
       {/* cabeçalho */}
       <div className="flex items-center gap-3 px-3 pb-3">
-        <span className="flex -space-x-2">
-          <Avatar name={me.profile.display_name} className="ring-2 ring-cream" />
-          {me.partner && <Avatar name={me.partner.display_name} tone="coral" className="ring-2 ring-cream" />}
-        </span>
+        <CouplePhoto size="sm" />
         <Link href={`/dates/${d.id}`} className="min-w-0 flex-1 leading-tight">
           <span className="block truncate text-sm font-semibold">
             {d.place_name} <span className="font-normal text-muted">· {categoryInfo(d.category).label}</span>
