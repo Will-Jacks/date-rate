@@ -1,11 +1,11 @@
 "use client";
 
-import { Bell, BellOff, Share, SquarePlus, X } from "lucide-react";
+import { Bell, BellOff, Share, SquarePlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { errorMessage } from "@/lib/errors";
 import { disablePush, enablePush, getPushState, isIOS, notify, type PushState } from "@/lib/push";
 import { useToast } from "./toast";
-import { Button } from "./ui";
+import { Button, Sheet } from "./ui";
 
 function usePushState() {
   const [state, setState] = useState<PushState | null>(null);
@@ -117,9 +117,10 @@ export function PushSettings() {
   );
 }
 
+// "Agora não" vale só até fechar o app: na próxima vez que abrir, pergunta de novo
 const DISMISS_KEY = "dr-push-prompt-dismissed";
 
-/** Convite discreto no topo do feed até a pessoa ativar ou dispensar. */
+/** Ao abrir o app, pergunta se quer ativar as notificações (enquanto não estiverem ativas). */
 export function PushPrompt({ partnerName }: { partnerName: string | null }) {
   const [state, setState] = usePushState();
   const [hidden, setHidden] = useState(true);
@@ -128,8 +129,8 @@ export function PushPrompt({ partnerName }: { partnerName: string | null }) {
 
   useEffect(() => {
     try {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage só existe no navegador
-      setHidden(localStorage.getItem(DISMISS_KEY) === "1");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sessionStorage só existe no navegador
+      setHidden(sessionStorage.getItem(DISMISS_KEY) === "1");
     } catch {
       setHidden(false);
     }
@@ -139,46 +140,55 @@ export function PushPrompt({ partnerName }: { partnerName: string | null }) {
   const dismiss = () => {
     setHidden(true);
     try {
-      localStorage.setItem(DISMISS_KEY, "1");
+      sessionStorage.setItem(DISMISS_KEY, "1");
     } catch {
       /* ok */
     }
   };
 
   return (
-    <div className="animate-page-fade relative mx-4 mb-4 rounded-2xl border border-line bg-card p-4 pr-10">
-      <button onClick={dismiss} aria-label="Dispensar" className="absolute right-2 top-2 grid size-8 place-items-center text-muted">
-        <X className="size-4" aria-hidden />
-      </button>
-      <p className="font-serif text-lg leading-tight">🔔 Saiba na hora quando {partnerName ?? "seu par"} avaliar</p>
-      {state === "needs-install" ? (
-        <>
-          <p className="mt-1 text-sm text-muted">No iPhone, primeiro instale o app:</p>
-          <InstallSteps />
-        </>
-      ) : (
-        <Button
-          className="mt-3 w-full"
-          loading={busy}
-          onClick={async () => {
-            setBusy(true);
-            try {
-              const next = await enablePush();
-              setState(next);
-              if (next === "on") {
-                await notify({ type: "test" });
-                toast("Notificações ativadas! 🔔");
-              }
-            } catch (e) {
-              toast(errorMessage(e, "Não foi possível ativar as notificações."), "error");
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          Ativar notificações
-        </Button>
-      )}
-    </div>
+    <Sheet title="Ativar notificações?" onClose={dismiss}>
+      <div className="pb-5">
+        <p className="text-sm text-muted">
+          🔔 Saiba na hora quando {partnerName ?? "seu par"} avaliar um date, comentar ou marcar um novo.
+        </p>
+        {state === "needs-install" ? (
+          <>
+            <p className="mt-3 text-sm text-muted">No iPhone, primeiro instale o app:</p>
+            <InstallSteps />
+            <Button variant="secondary" className="mt-4 w-full" onClick={dismiss}>
+              Entendi
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              className="mt-4 w-full"
+              loading={busy}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  const next = await enablePush();
+                  setState(next);
+                  if (next === "on") {
+                    await notify({ type: "test" });
+                    toast("Notificações ativadas! 🔔");
+                  }
+                } catch (e) {
+                  toast(errorMessage(e, "Não foi possível ativar as notificações."), "error");
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              Ativar notificações
+            </Button>
+            <Button variant="ghost" className="mt-2 w-full" disabled={busy} onClick={dismiss}>
+              Agora não
+            </Button>
+          </>
+        )}
+      </div>
+    </Sheet>
   );
 }

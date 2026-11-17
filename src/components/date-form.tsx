@@ -183,7 +183,17 @@ export function DateForm({
     }
     if (!hasCover) errs.cover = "Escolha uma foto de capa.";
     setErrors(errs);
-    if (!parsed.success || Object.keys(errs).length) return;
+    if (!parsed.success || Object.keys(errs).length) {
+      // leva até o primeiro campo com problema (na ordem da tela) e foca nele
+      const form = e.currentTarget as HTMLFormElement;
+      const first = Array.from(form.querySelectorAll<HTMLElement>("[data-field], [name]")).find((el) =>
+        Object.hasOwn(errs, el.dataset.field ?? el.getAttribute("name") ?? ""),
+      );
+      first?.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (first && first.matches("input, textarea")) first.focus({ preventScroll: true });
+      navigator.vibrate?.(30);
+      return;
+    }
     onSubmit({
       input: {
         ...parsed.data,
@@ -204,7 +214,7 @@ export function DateForm({
   return (
     <form onSubmit={submit} className="flex flex-col gap-5" noValidate>
       {/* Capa */}
-      <div>
+      <div data-field="cover">
         <CoverEditor url={coverUrl} focus={focus} onFocus={setFocus} onChange={changeCover} invalid={!!errors.cover} />
         <input
           ref={coverInput}
@@ -234,23 +244,26 @@ export function DateForm({
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Onde foi?</span>
         <Input
+          name="place_name"
           value={placeName}
           onChange={(e) => setPlaceName(e.target.value)}
           placeholder="Ex.: Mangai"
           maxLength={120}
           aria-invalid={!!errors.place_name}
+          className={errors.place_name ? "border-wine ring-2 ring-wine/15" : ""}
         />
         {errors.place_name && <span className="text-sm text-wine">{errors.place_name}</span>}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="Quando?">
-          <Input type="date" value={dateOn} onChange={(e) => setDateOn(e.target.value)} max="2100-12-31" />
+          <Input type="date" name="date_on" value={dateOn} onChange={(e) => setDateOn(e.target.value)} max="2100-12-31" />
           {errors.date_on && <span className="text-sm text-wine">{errors.date_on}</span>}
         </Field>
         <Field label="Quanto gastaram?">
           <Input
             inputMode="decimal"
+            name="cost"
             value={cost}
             onChange={(e) => setCost(e.target.value)}
             placeholder="R$ (opcional)"
@@ -283,7 +296,7 @@ export function DateForm({
       </Field>
 
       <Field label="Frase do date" hint="Opcional. Uma frase marcante, uma piada interna…">
-        <TextArea value={quote} onChange={(e) => setQuote(e.target.value)} maxLength={200} placeholder="“Nunca mais peço o prato do dia”" className="min-h-16" />
+        <TextArea name="quote" value={quote} onChange={(e) => setQuote(e.target.value)} maxLength={200} placeholder="“Nunca mais peço o prato do dia”" className="min-h-16" />
         {errors.quote && <span className="text-sm text-wine">{errors.quote}</span>}
       </Field>
 
