@@ -54,7 +54,6 @@ function NewDate() {
     dates.data?.forEach((d) => d.tags.forEach((t) => count.set(t, (count.get(t) ?? 0) + 1)));
     return [...count.entries()].sort((a, b) => b[1] - a[1]).map(([t]) => t);
   }, [dates.data]);
-  const near = dates.data?.find((d) => d.lat != null && d.lng != null);
 
   async function save({ input, newCover, newExtras }: DateFormResult) {
     if (!newCover) return;
@@ -100,7 +99,6 @@ function NewDate() {
           key={`${plan.data?.id ?? ""}-${wish?.id ?? ""}`}
           initial={initial}
           tagSuggestions={tagSuggestions}
-          near={near ? { lat: near.lat!, lng: near.lng! } : null}
           submitLabel="Salvar date"
           saving={saving}
           progress={progress}

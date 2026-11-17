@@ -4,7 +4,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CalendarPlus, Check, Dices, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { PlaceSearch } from "@/components/place-search";
 import { PlanCard, PlanSheet, Roulette } from "@/components/plans";
 import { useToast } from "@/components/toast";
 import { Button, EmptyState, ErrorState, Input, PageHeader, Spinner } from "@/components/ui";
@@ -12,7 +11,7 @@ import { addWish, deleteWish } from "@/lib/api";
 import { errorMessage } from "@/lib/errors";
 import { keys, useCurrentMe, usePlans, useWishlist } from "@/lib/hooks";
 import { notify } from "@/lib/push";
-import type { PlacePick, WishItem } from "@/lib/types";
+import type { WishItem } from "@/lib/types";
 
 export default function PlansPage() {
   const me = useCurrentMe();
@@ -21,7 +20,6 @@ export default function PlansPage() {
   const qc = useQueryClient();
   const toast = useToast();
   const [place, setPlace] = useState("");
-  const [picked, setPicked] = useState<PlacePick | null>(null);
   const [notes, setNotes] = useState("");
   const [adding, setAdding] = useState(false);
   const [sheet, setSheet] = useState<{ wish: WishItem | null } | null>(null);
@@ -35,10 +33,9 @@ export default function PlansPage() {
     if (!place.trim()) return;
     setAdding(true);
     try {
-      const wishId = await addWish(me.couple.id, place.trim(), notes.trim() || null, picked);
+      const wishId = await addWish(me.couple.id, place.trim(), notes.trim() || null);
       notify({ type: "wish_added", wishId });
       setPlace("");
-      setPicked(null);
       setNotes("");
       refresh();
     } catch (err) {
@@ -116,19 +113,7 @@ export default function PlansPage() {
       <section className="mt-8">
         <h2 className="mb-3 px-4 font-serif text-xl">Queremos ir</h2>
         <form onSubmit={add} className="mx-4 mb-4 flex flex-col gap-2 rounded-2xl border border-line bg-card p-4">
-          <PlaceSearch
-            value={place}
-            placeholder="Lugar que vocês querem conhecer"
-            onChange={(v) => {
-              setPlace(v);
-              setPicked(null);
-            }}
-            onPick={(p) => {
-              setPlace(p.name);
-              setPicked(p);
-            }}
-          />
-          {picked?.address && <span className="px-1 text-xs text-muted">📍 {picked.address}</span>}
+          <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Lugar que vocês querem conhecer" maxLength={120} />
           <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Observação (opcional)" maxLength={300} />
           <Button type="submit" loading={adding} disabled={!place.trim()}>
             Adicionar à lista

@@ -3,7 +3,7 @@
 Diário de dates a dois. Cada date vira um card com foto de capa, e cada pessoa
 dá uma nota de **1 a 10**. A nota do outro só aparece depois que você avalia.
 
-**Stack:** Next.js 16 (App Router, PWA) · Tailwind CSS 4 · TanStack Query · Supabase (Auth, Postgres com RLS, Storage, Realtime) · Web Push · Leaflet/OpenStreetMap
+**Stack:** Next.js 16 (App Router, PWA) · Tailwind CSS 4 · TanStack Query · Supabase (Auth, Postgres com RLS, Storage, Realtime) · Web Push
 
 ## O que o app faz
 
@@ -13,8 +13,7 @@ dá uma nota de **1 a 10**. A nota do outro só aparece depois que você avalia.
 - **Conversa** em cada date, com reações em emoji (inclusive na nota do outro)
 - **Tempo real** e **notificações push**: nota nova, date novo, comentário, date marcado, lembretes
 - **Planos**: dates marcados com contagem regressiva, roleta para sortear o próximo e lista "Queremos ir"
-- **Busca de lugares** (OpenStreetMap) que preenche endereço, mapa e tipo do date
-- **Mapa** com os dates, aberto na sua localização atual; **revisitas** do mesmo lugar com a evolução da nota
+- **Revisitas** do mesmo lugar com a evolução da nota
 - **Nós**: estatísticas, medalhas, sequência de semanas, orçamento do mês e **Retrospectiva** anual no estilo stories
 - **"Num dia como hoje"**, **card para compartilhar nos stories**, **esqueci minha senha**, **modo offline**, tema escuro
 
@@ -86,7 +85,6 @@ src/
       page.tsx               feed
       dates/new · [id] · [id]/edit
       wishlist/              Planos: dates marcados, roleta, "Queremos ir"
-      map/                   mapa dos dates
       profile/               Nós: medalhas, sequência, orçamento, ajustes
       retro/                 retrospectiva do ano
     api/notify               envia push para o par
@@ -97,7 +95,6 @@ src/
     hooks.ts · realtime.ts   dados e tempo real (TanStack Query)
     insights.ts              medalhas, sequência, retrospectiva… (puro, testado)
     push.ts · server/push.ts notificações (navegador / servidor)
-    places.ts                busca de lugares (Photon/OpenStreetMap)
 public/sw.js                 service worker: push + offline
 supabase/migrations/         schema SQL
 tests/                       vitest: banco (PGlite), lógica, push

@@ -3,7 +3,6 @@ import { compareScores } from "@/lib/compare";
 import { formatCost, formatDate, formatScore } from "@/lib/format";
 import { achievements, monthSpending, normalizePlace, onThisDay, retro, visitsOf, weeklyStreak } from "@/lib/insights";
 import { buildMessage } from "@/lib/notify-messages";
-import { guessCategory, guessCategoryFromGoogle } from "@/lib/places";
 import type { DateItem } from "@/lib/types";
 
 let seq = 0;
@@ -141,18 +140,5 @@ describe("notificações", () => {
     const m = buildMessage({ type: "commented", actor: "Will", dateId: "d1", place: "X", text: "a".repeat(200) });
     expect(m.body.length).toBeLessThanOrEqual(90);
     expect(m.url).toBe("/dates/d1#conversa");
-  });
-});
-
-describe("busca de lugares", () => {
-  it("sugere o tipo de date pelo tipo do lugar", () => {
-    expect(guessCategory("amenity", "restaurant")).toBe("jantar");
-    expect(guessCategory("amenity", "cinema")).toBe("cinema");
-    expect(guessCategory("leisure", "park")).toBe("passeio");
-    expect(guessCategory("shop", "shoes")).toBeUndefined();
-    expect(guessCategoryFromGoogle("brazilian_restaurant")).toBe("jantar");
-    expect(guessCategoryFromGoogle("night_club")).toBe("bar");
-    expect(guessCategoryFromGoogle("movie_theater")).toBe("cinema");
-    expect(guessCategoryFromGoogle("car_wash")).toBeUndefined();
   });
 });

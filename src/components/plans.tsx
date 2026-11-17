@@ -10,7 +10,6 @@ import { formatWhen } from "@/lib/notify-messages";
 import { notify } from "@/lib/push";
 import type { Plan, WishItem } from "@/lib/types";
 import { Confetti } from "./confetti";
-import { PlaceSearch } from "./place-search";
 import { useToast } from "./toast";
 import { Button, Field, Input, Sheet, TextArea } from "./ui";
 
@@ -55,8 +54,8 @@ export function PlanSheet({
   const qc = useQueryClient();
   const toast = useToast();
   const [place, setPlace] = useState(wish?.place_name ?? "");
-  const [address, setAddress] = useState<string | null>(wish?.place_address ?? null);
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+  const [address] = useState<string | null>(wish?.place_address ?? null);
+  const [coords] = useState<{ lat: number; lng: number } | null>(
     wish?.lat != null && wish?.lng != null ? { lat: wish.lat, lng: wish.lng } : null,
   );
   const [when, setWhen] = useState(defaultWhen);
@@ -92,19 +91,7 @@ export function PlanSheet({
       <form onSubmit={save} className="flex flex-col gap-4 pb-5">
         <div className="flex flex-col gap-1.5">
           <span className="text-sm font-medium">Onde?</span>
-          <PlaceSearch
-            value={place}
-            autoFocus={!wish}
-            onChange={(v) => {
-              setPlace(v);
-              setCoords(null);
-            }}
-            onPick={(p) => {
-              setPlace(p.name);
-              setAddress(p.address);
-              setCoords({ lat: p.lat, lng: p.lng });
-            }}
-          />
+          <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Ex.: Mangai" maxLength={120} autoFocus={!wish} />
           {address && <span className="text-xs text-muted">📍 {address}</span>}
         </div>
         <Field label="Quando?">

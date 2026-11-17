@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarHeart, Heart, LayoutGrid, Map as MapIcon, Plus } from "lucide-react";
+import { CalendarHeart, Heart, LayoutGrid, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -31,7 +31,7 @@ export function BottomNav() {
   return (
     <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-[480px] items-center justify-around border-t border-line bg-card px-1 pt-2">
       {item("/", path === "/", "Feed", <LayoutGrid className="size-5" aria-hidden />)}
-      {item("/map", path.startsWith("/map"), "Mapa", <MapIcon className="size-5" aria-hidden />)}
+      {item("/wishlist", path.startsWith("/wishlist"), "Planos", <CalendarHeart className="size-5" aria-hidden />, soon)}
       <div className="flex flex-1 justify-center">
         <Link
           href="/dates/new"
@@ -41,7 +41,6 @@ export function BottomNav() {
           <Plus className="size-7" aria-hidden />
         </Link>
       </div>
-      {item("/wishlist", path.startsWith("/wishlist"), "Planos", <CalendarHeart className="size-5" aria-hidden />, soon)}
       {item("/profile", path.startsWith("/profile"), "Nós", <Heart className="size-5" aria-hidden />)}
     </nav>
   );

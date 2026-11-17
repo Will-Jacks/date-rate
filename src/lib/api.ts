@@ -375,11 +375,6 @@ export async function saveRating(
   );
 }
 
-/** Guarda as coordenadas encontradas para o mapa. */
-export async function saveCoords(dateId: string, lat: number, lng: number) {
-  await run(() => supabase().from("dates").update({ lat, lng }).eq("id", dateId));
-}
-
 /* ------------------------------------------------- comentários e reações */
 
 export async function listComments(dateId: string): Promise<Comment[]> {
@@ -462,11 +457,9 @@ export async function addWish(
   coupleId: string,
   place_name: string,
   notes: string | null,
-  place?: { address: string | null; lat: number; lng: number } | null,
 ): Promise<string> {
-  const extra = place ? { place_address: place.address, lat: place.lat, lng: place.lng } : {};
   const row: { id: string } = await run(() =>
-    supabase().from("wishlist").insert({ couple_id: coupleId, place_name, notes, ...extra }).select("id").single(),
+    supabase().from("wishlist").insert({ couple_id: coupleId, place_name, notes }).select("id").single(),
   );
   return row.id;
 }

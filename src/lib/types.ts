@@ -103,14 +103,6 @@ export type Reaction = {
   emoji: string;
 };
 
-/** Lugar escolhido na busca (OpenStreetMap). */
-export type PlacePick = {
-  name: string;
-  address: string | null;
-  lat: number;
-  lng: number;
-  category?: Category;
-};
 
 export type DateInput = {
   place_name: string;

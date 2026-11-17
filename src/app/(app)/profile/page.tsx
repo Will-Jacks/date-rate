@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, LogOut, Map as MapIcon, Sparkles, UserMinus } from "lucide-react";
+import { ChevronRight, LogOut, Sparkles, UserMinus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -118,12 +118,6 @@ Você deixa de ver os dates deste diário e poderá entrar em outro com um novo 
         <StreakCard dates={list} />
         <BudgetCard dates={list} me={me} />
         <Medals dates={list} />
-
-        <Link href="/map" className="flex items-center gap-3 rounded-2xl border border-line bg-card p-4">
-          <MapIcon className="size-5 text-wine" aria-hidden />
-          <span className="flex-1 font-medium">Mapa dos nossos dates</span>
-          <ChevronRight className="size-5 text-muted" aria-hidden />
-        </Link>
 
         <h2 className="mt-2 font-serif text-xl">Ajustes</h2>
         <PushSettings />

@@ -7,7 +7,6 @@ import { CATEGORIES, type Category } from "@/lib/categories";
 import { todayISO } from "@/lib/format";
 import type { DateInput, DatePhoto } from "@/lib/types";
 import { CENTER, CoverChooser, CoverEditor, type CoverOption, type Focus } from "./cover-editor";
-import { PlaceSearch } from "./place-search";
 import { TagInput } from "./tag-input";
 import { Button, Field, Input, TextArea } from "./ui";
 
@@ -55,7 +54,6 @@ export function DateForm({
   existingPhotos = [],
   photoUrls = {},
   tagSuggestions = [],
-  near,
   submitLabel,
   saving,
   progress,
@@ -67,7 +65,6 @@ export function DateForm({
   existingPhotos?: DatePhoto[];
   photoUrls?: Record<string, string>;
   tagSuggestions?: string[];
-  near?: { lat: number; lng: number } | null;
   submitLabel: string;
   saving: boolean;
   progress: string | null;
@@ -88,7 +85,8 @@ export function DateForm({
   const [choosing, setChoosing] = useState(false);
   const [quote, setQuote] = useState(initial?.quote ?? "");
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+  // coordenadas de dates antigos (da busca de lugares, removida) são mantidas como estão
+  const [coords] = useState<{ lat: number; lng: number } | null>(
     initial?.lat != null && initial?.lng != null ? { lat: initial.lat, lng: initial.lng } : null,
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -235,27 +233,14 @@ export function DateForm({
 
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Onde foi?</span>
-        <PlaceSearch
+        <Input
           value={placeName}
-          near={coords}
-          fallbackNear={near}
-          invalid={!!errors.place_name}
-          onChange={(v) => {
-            setPlaceName(v);
-            setCoords(null); // nome digitado à mão: coordenadas antigas deixam de valer
-          }}
-          onPick={(p) => {
-            setPlaceName(p.name);
-            if (p.address) setAddress(p.address);
-            setCoords({ lat: p.lat, lng: p.lng });
-            if (p.category) setCategory(p.category);
-          }}
+          onChange={(e) => setPlaceName(e.target.value)}
+          placeholder="Ex.: Mangai"
+          maxLength={120}
+          aria-invalid={!!errors.place_name}
         />
-        {errors.place_name ? (
-          <span className="text-sm text-wine">{errors.place_name}</span>
-        ) : (
-          <span className="text-xs text-muted">{coords ? "📍 Localização encontrada — vai aparecer no mapa." : "Digite e escolha uma sugestão para preencher o endereço."}</span>
-        )}
+        {errors.place_name && <span className="text-sm text-wine">{errors.place_name}</span>}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
