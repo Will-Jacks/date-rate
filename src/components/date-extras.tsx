@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight, Minus, RotateCcw, Share2 } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Minus, RotateCcw, Send, Share2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { formatDate, formatScore } from "@/lib/format";
@@ -57,7 +57,18 @@ export function Revisits({ date, all }: { date: DateItem; all: DateItem[] }) {
 }
 
 /** Botão que gera o card no formato stories e abre o compartilhamento. */
-export function ShareButton({ date, coverUrl, me }: { date: DateItem; coverUrl?: string; me: Me }) {
+export function ShareButton({
+  date,
+  coverUrl,
+  me,
+  compact = false,
+}: {
+  date: DateItem;
+  coverUrl?: string;
+  me: Me;
+  /** só o ícone (rolagem contínua) */
+  compact?: boolean;
+}) {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
 
@@ -80,6 +91,13 @@ export function ShareButton({ date, coverUrl, me }: { date: DateItem; coverUrl?:
       setBusy(false);
     }
   }
+
+  if (compact)
+    return (
+      <button onClick={share} disabled={busy} aria-label="Compartilhar card nos stories" className="grid size-10 place-items-center disabled:opacity-50">
+        <Send className="size-6" aria-hidden />
+      </button>
+    );
 
   return (
     <Button variant="secondary" className="w-full" loading={busy} onClick={share}>

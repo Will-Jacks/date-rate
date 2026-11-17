@@ -124,6 +124,19 @@ export async function setBudget(coupleId: string, value: number | null) {
   await run(() => supabase().from("couples").update({ monthly_budget: value }).eq("id", coupleId));
 }
 
+/** Troca a foto do casal (perfil) e apaga a antiga. */
+export async function setCouplePhoto(coupleId: string, file: File, oldPath?: string | null): Promise<string> {
+  const path = await uploadPhoto(coupleId, "perfil", file);
+  try {
+    await run(() => supabase().from("couples").update({ photo_path: path }).eq("id", coupleId));
+  } catch (e) {
+    await removePhotos([path]);
+    throw e;
+  }
+  if (oldPath) await removePhotos([oldPath]);
+  return path;
+}
+
 export async function updateDisplayName(userId: string, name: string) {
   await run(() => supabase().from("profiles").update({ display_name: name }).eq("id", userId));
 }

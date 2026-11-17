@@ -157,6 +157,8 @@ describe("novidades", () => {
 
   it("os dois editam o orçamento, mas não o código de convite", async () => {
     expect((await h.as(B, `update couples set monthly_budget = 300`)).error).toBeNull();
+    expect((await h.as(B, `update couples set photo_path = 'x/perfil/a.jpg'`)).error).toBeNull();
+    expect((await h.as(B, `update couples set invite_code = 'ABCDEF'`)).error).toContain("permission denied");
     expect((await h.as(B, `update couples set invite_code = 'AAAAAA'`)).error).toContain("permission denied");
   });
 

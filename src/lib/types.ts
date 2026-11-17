@@ -11,6 +11,8 @@ export type Couple = {
   name: string | null;
   invite_code: string;
   monthly_budget: number | null;
+  /** foto do casal no perfil (ausente antes da migração 0007) */
+  photo_path?: string | null;
 };
 
 export type Me = {

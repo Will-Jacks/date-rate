@@ -45,8 +45,8 @@ export function useDate(id: string) {
   });
 }
 
-export function usePhotos(id: string) {
-  return useQuery({ queryKey: keys.photos(id), queryFn: () => api.getPhotos(id) });
+export function usePhotos(id: string, enabled = true) {
+  return useQuery({ queryKey: keys.photos(id), queryFn: () => api.getPhotos(id), enabled });
 }
 
 export function useWishlist() {

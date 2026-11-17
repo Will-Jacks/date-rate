@@ -7,7 +7,8 @@ dá uma nota de **1 a 10**. A nota do outro só aparece depois que você avalia.
 
 ## O que o app faz
 
-- **Feed** de cards 4:5 com busca, ordenação, filtros e etiquetas; toque duplo favorita
+- **Perfil do casal** estilo Instagram: foto de vocês, números, destaques (planos, "num dia como hoje", "Queremos ir") e grade de capas com busca, ordenação, filtros e etiquetas
+- **Rolagem contínua**: tocar numa capa abre os dates em sequência, com fotos deslizáveis, notas e frase; dois toques favorita
 - **Capa ajustável**: arraste para enquadrar e troque por qualquer foto do date sem abrir a galeria do celular
 - **Notas de 1 a 10 ocultas** até os dois avaliarem, com frases de comparação, confete e critérios opcionais (comida, ambiente, preço, vibe) num gráfico de radar, editáveis depois
 - **Conversa** em cada date, com reações em emoji (inclusive na nota do outro)
@@ -22,7 +23,7 @@ dá uma nota de **1 a 10**. A nota do outro só aparece depois que você avalia.
 ### 1. Supabase
 1. Crie um projeto gratuito em [supabase.com](https://supabase.com).
 2. Em **SQL Editor**, rode **na ordem** cada arquivo de [`supabase/migrations/`](supabase/migrations/)
-   (`0001_init.sql` → `0006_cover_focus.sql`): cole o conteúdo e clique em **Run**.
+   (`0001_init.sql` → `0007_couple_photo.sql`): cole o conteúdo e clique em **Run**.
    Todos podem ser rodados de novo sem problema.
 3. Em **Authentication → Sign In / Providers → Email**, desative **Confirm email**.
 4. Em **Authentication → URL Configuration → Redirect URLs**, adicione
